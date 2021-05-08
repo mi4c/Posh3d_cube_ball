@@ -65,6 +65,7 @@ Using Namespace System.Text
     INIT  DATE        VERSION    NOTES
     MK    2019-12-29  1.0        Initial Script Release
 #>
+
 function Cleanup-Variables {
     <#
     .SYNOPSIS
@@ -98,10 +99,10 @@ function Cleanup-Variables {
 . .\class\scene3d.ps1
 
 
-# Koska powershell suorittaa koodin runtime aikana, ei voida käyttää x:Class attribuuttia ja suorittaa koodia tämän takana. Tämä toiminta vaatii compilerin ja powershell ei sellaista tarjoa.
-# Tämän takia menetetään mahdollisuus kutsua XAML:n kautta olevia keydown tai mousedown etc. aioita.
-# Jos näppäin tai hiirikomentoja haluaa toteuttaa pitää ne rekisteröidä lennosta ja hookup lennosta haluttuun objektiin, eli ei ihan ideaalisin tilanne reaaliaikaisien
-# komentojen suorittamiseen. 2D WinForms puolella tämä oli helppoa kun ei tarvinnut miettiä tällaisia ongelmia, mutta ei tuota viewport ominaisuutta kyllä kykene omin päin sinne implementoimaan :).
+# Because powershell is a runtime code, we cannot use XAML x:Class attribute and commit the code behind this. This behaviour requires compiler and powershell doesn't provide that.
+# For this reason we loose ability to call code behind XAML to call keydown and mousedown etc. things.
+# If you want to use keys or mouse commands you need to register those on the fly and hoopup on the fly to the wanted object, so not the most ideal situation for the realtime commands to commit.
+# There is an issue with realtime register keys, after enough key presses to fast committed the powershell crashes.
 [xml]$xaml = @"
 <Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
