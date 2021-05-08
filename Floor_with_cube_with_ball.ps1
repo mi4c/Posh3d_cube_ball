@@ -101,7 +101,7 @@ function Cleanup-Variables {
 
 # Because powershell is a runtime code, we cannot use XAML x:Class attribute and commit the code behind this. This behaviour requires compiler and powershell doesn't provide that.
 # For this reason we loose ability to call code behind XAML to call keydown and mousedown etc. things.
-# If you want to use keys or mouse commands you need to register those on the fly and hoopup on the fly to the wanted object, so not the most ideal situation for the realtime commands to commit.
+# If you want to use keys or mouse commands you need to register those on the fly and hookup on the fly to the wanted object, so not the most ideal situation for the realtime commands to commit.
 # There is an issue with realtime register keys, after enough key presses to fast committed the powershell crashes.
 [xml]$xaml = @"
 <Window
