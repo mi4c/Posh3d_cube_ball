@@ -452,6 +452,7 @@ $timer.add_Tick({
 
 [System.Windows.EventManager]::RegisterClassHandler([system.windows.Window], [Keyboard]::KeyUpEvent , [KeyEventHandler] {
 Param ([Object] $sender, [System.Windows.Input.KeyEventArgs]$eventArgs)
+    # This was used earlier to stop moving the ball currently no use of this.
 })
 
 
