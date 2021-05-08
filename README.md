@@ -3,7 +3,7 @@ This was just my test how to do some 3D graphics with powershell...
 And to get more familiar with powershell classes.
 
 Move ball with keys up,down,left,right
-Look ball up and down with keys t,g
+Look ball up and down with keys t,g in camera3
 Move skycam with keys w,s,a,d
 zoomin/out skycam keys r,f
 
