@@ -75,12 +75,6 @@
     {
         [WpfCube]$cube = [WpfCube]::new($p0, $w, $h, $d);
         [double]$maxDimension = [Math]::Max($d, [Math]::Max($w, $h));
-#        [WpfRectangle]$front =  $cube.Front($p0,$w,$h);
-#        [WpfRectangle]$back = $cube.Back($p0,$w,$h,$d);
-#        [WpfRectangle]$right = $cube.Right($p0, $h, $d);
-#        [WpfRectangle]$left = $cube.Left($p0, $h, $d);
-#        [WpfRectangle]$top = $cube.Top($p0,$w,$h);
-#        [WpfRectangle]$bottom = $cube.Bottom($p0,$w,$h,$d);
         [WpfRectangle]$front =  $cube.Front();
         [WpfRectangle]$back = $cube.Back();
         [WpfRectangle]$right = $cube.Right();
@@ -104,6 +98,7 @@
         [WPFCube]::addCubeToMesh($p0, $w, $h, $d, $mesh);
         $material = New-Object System.Windows.Media.Media3D.DiffuseMaterial -Property (@{Brush = $color.Name});
         $model = New-Object System.Windows.Media.Media3D.GeometryModel3D -ArgumentList $mesh, $material
+        $model.BackMaterial = $material
         return $model;
     }
 }

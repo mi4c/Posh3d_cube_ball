@@ -1,31 +1,58 @@
+Enum SphereDirection {
+    Left
+    Right
+    Up
+    Down
+}
+
+Enum SphereAction {
+    Nothing
+    Collision
+}
+
 Class Sphere{
     [System.Windows.Media.Media3D.Point3D]$origin
     [Double]$width
     [Double]$height
     [Double]$depth
-    [System.Windows.Media.Media3D.Point3D]centerBottom(){
-        [System.Windows.Media.Media3D.Point3D]$c = New-Object System.Windows.Media.Media3D.Point3D -ArgumentList(($this.origin.X + ($this.width / 2)),($this.origin.Y + $this.height),($this.origin.Z + ($this.depth / 2)));
-        return $c;
-    }
-    [System.Windows.Media.Media3D.Point3D]center(){
-        [System.Windows.Media.Media3D.Point3D]$c = New-Object System.Windows.Media.Media3D.Point3D -ArgumentList(($this.origin.X + ($this.width / 2)),($this.origin.Y - ($this.height / 2)),($this.origin.Z + ($this.depth / 2)));
-        return $c;
-    }
-    [System.Windows.Media.Media3D.Point3D]centerTop(){
-        [System.Windows.Media.Media3D.Point3D]$c = New-Object System.Windows.Media.Media3D.Point3D -ArgumentList(($this.origin.X + ($this.width / 2)),($this.origin.Y),($this.origin.Z + ($this.depth / 2)));
-        return $c;
-    }
-    WpfSphere([System.Windows.Media.Media3D.Point3D]$P0,[Double]$w,[Double]$h,[Double]$d){
+    [Double]$beginAngle
+    [Double]$endAngle
+    [Double]$startX
+    [Double]$startY
+    [Double]$startZ
+    [Double]$startradius
+    [int]$startphi
+    [int]$starttheta
+    [System.Windows.Media.Media3D.Vector3D]$axis
+    [System.Windows.Media.Media3D.RotateTransform3D]$rotateTransform
+    [System.Windows.Media.Media3D.TranslateTransform3D]$translateTransform
+    [System.Windows.Media.Media3D.Model3DGroup]$SphereModelGroup
+
+    
+
+    Sphere([System.Windows.Media.Media3D.Point3D]$P0,[Double]$w,[Double]$h,[Double]$d,[Double]$startX,[Double]$startY,[Double]$startZ){
         $this.width = $w
         $this.height = $h
         $this.depth = $d
         $this.origin = $P0
+        $this.startX = $startX
+        $this.startY = $startY
+        $this.startZ = $startZ
     }
-    WpfSphere([Sphere]$sphere){
+    Sphere([Sphere]$sphere,[Double]$startX,[Double]$startY,[Double]$startZ,[Double]$radius,[Int]$num_phi, [Int]$num_theta, $imagefile,[Bool]$transparent){
         $this.width = $sphere.width
         $this.height = $sphere.height
         $this.depth = $sphere.depth
-        $this.origin = New-Object System.Windows.Media.Media3D.Point3D -ArgumentList ($sphere.origin.X, $sphere.origin.Y, $sphere.origin.Z)
+        $this.SphereModelGroup = New-Object System.Windows.Media.Media3D.Model3DGroup
+        $this.startX = $startX
+        $this.startY = $startY
+        $this.startZ = $startZ
+        $this.startradius = $radius
+        $this.startphi = $num_phi
+        $this.starttheta = $num_theta
+        $this.Definemodel($imagefile,$transparent)
+        $this.origin = $sphere.GetBoundsorigin()
+        $this.addMotionTransforms()
     }
 
     [void]AddSphere([System.Windows.Media.Media3D.MeshGeometry3D]$mesh, [System.Windows.Media.Media3D.Point3D]$center, [double]$radius, [int]$num_phi, [int]$num_theta)
@@ -35,6 +62,7 @@ Class Sphere{
         [Double]$phi0 = 0;
         [Double]$y0 = ($radius * ([Math]::Cos($phi0)));
         [Double]$r0 = ($radius * ([Math]::Sin($phi0)));
+
         for ([Int]$i = 0; $i -lt $num_phi; $i++)
         {
             [Double]$phi1 = $phi0 + $dphi;
@@ -134,16 +162,19 @@ Class Sphere{
         }
     }
     # Make a sphere.
-#    Static MakeSphere([System.Windows.Media.Media3D.Model3DGroup]$model_group, [System.Windows.Media.Media3D.MeshGeometry3D]$sphere_mesh, [System.Windows.Media.Media3D.Material]$sphere_material,
-    static MakeSphere([System.Windows.Media.Media3D.MeshGeometry3D]$sphere_mesh, [System.Windows.Media.Media3D.Material]$sphere_material,
-        [Double]$radius, [Double]$cx, [Double]$cy, [Double]$cz, [Int]$num_phi, [Int]$num_theta)
+#    static MakeSphere([System.Windows.Media.Media3D.MeshGeometry3D]$sphere_mesh, [System.Windows.Media.Media3D.Material]$sphere_material,
+    Static MakeSphere([System.Windows.Media.Media3D.Model3DGroup]$model_group, [System.Windows.Media.Media3D.MeshGeometry3D]$sphere_mesh, [System.Windows.Media.Media3D.Material]$sphere_material,
+        [Double]$radius, [Double]$cx, [Double]$cy, [Double]$cz, [Int]$num_phi, [Int]$num_theta, [System.Windows.Media.Media3D.Material]$globe_BackMaterial, [Bool]$transparent)
     {
         # Make the mesh if we must.
         if ($sphere_mesh -eq $null)
         {
             $sphere_mesh = New-Object System.Windows.Media.Media3D.MeshGeometry3D;
             $new_model = New-Object System.Windows.Media.Media3D.GeometryModel3D($sphere_mesh, $sphere_material);
-#            $model_group.Children.Add($new_model)
+            if(-Not $transparent){
+                $new_model.BackMaterial = $globe_BackMaterial
+            }
+            $model_group.Children.Add($new_model)
         }
         [Double]$dphi = ([Math]::PI / $num_phi);
         [Double]$dtheta = (2 * ([Math]::PI / $num_theta))
@@ -186,38 +217,158 @@ Class Sphere{
             }
         }
     }
+
+    [System.Windows.Media.Media3D.Model3DGroup]getModelGroup()
+    {
+        return $this.SphereModelGroup;
+    }
+
+    [System.Windows.Media.Media3D.RotateTransform3D]getRotateTransform()
+    {
+        return $this.rotateTransform;
+    }
+
+    [System.Windows.Media.Media3D.TranslateTransform3D]getTranslateTransform()
+    {
+        return [System.Windows.Media.Media3D.TranslateTransform3D]$this.translateTransform;
+    }
+
+    [System.Windows.Media.Media3D.Point3D]getModelPlace()
+    {
+        [System.Windows.Media.Media3D.Point3D]$p = New-Object System.Windows.Media.Media3D.Point3D((-(([Sphere]::getWidth()) / 2)), ([Sphere]::getHeight()), (-($this.depth) / 2));
+        return $p;
+    }
+
+    static [double]getHeight()
+    {
+        return ([Scene]::sceneSize / 3);
+    }
+
+    static [double]getWidth()
+    {
+        return (([Sphere]::getHeight() * 2) / 8);  # based on body width = 3 head widths
+    }
+
+    [System.Windows.Media.Media3D.Point3D]clonePoint([System.Windows.Media.Media3D.Point3D]$p)
+    {
+        return (New-Object System.Windows.Media.Media3D.Point3D($p.X, $p.Y, $p.Z))
+    }
+
     # Add the model to the Model3DGroup.
-    Static DefineModel([System.Windows.Media.Media3D.Model3DGroup]$model_group)
+#    DefineModel([System.Windows.Media.Media3D.Model3DGroup]$model_group)
+    DefineModel($imagefile,[Bool]$transparent)
     {
         # Globe. Place it in a new model so we can transform it.
         [System.Windows.Media.Media3D.Model3DGroup]$globe_model = New-Object System.Windows.Media.Media3D.Model3DGroup
-        $model_group.Children.Add($globe_model);
+#        $model_group.Children.Add($globe_model);
+        $this.SphereModelGroup.Children.Add($globe_model);
         
-        $uri = New-Object System.Uri("$PSScriptRoot\..\Files\face.jpg")
+        $uri = New-Object System.Uri("$PSScriptRoot\..\Files\$imagefile")
+#        $uri = New-Object System.Uri("$PSScriptRoot\..\Files\face.jpg")
         $imagesource = New-Object System.Windows.Media.Imaging.BitmapImage $uri
         $globe_brush = New-Object System.Windows.Media.ImageBrush $imagesource
         $globe_material = New-Object System.Windows.Media.Media3D.DiffuseMaterial -Property @{Brush = $globe_brush}
+        $globe_BackMaterial = $globe_material
+        
         [System.Windows.Media.Media3D.MeshGeometry3D]$globe_mesh = $null;
-        [Sphere]::MakeSphere($globe_model, $globe_mesh, $globe_material, 1, -9.2, 0.6, 9.2, 20, 30);
+#        [Sphere]::MakeSphere($globe_model, ($globe_mesh), $globe_material, 1, 2.74066683953478,0.6,8.00816300307612, 20, 30);
+        Write-Warning "$($this.startX) $($this.startY) $($this.startZ)"
+        [Sphere]::MakeSphere($globe_model, ($globe_mesh), $globe_material, $this.startradius, $($this.startX),$($this.startY),$($this.startZ), $this.startphi, $this.starttheta,$globe_BackMaterial,$transparent);
+#        [Sphere]::MakeSphere($globe_model, ($globe_mesh), $globe_material, 1, $($this.startX),$($this.startY),$($this.startZ), 20, 30);
     }
-    
-    [System.Windows.Media.Media3D.GeometryModel3D]CreateModel()
-    {
-        return [Sphere]::CreateSphereModel($this.origin, $this.width, $this.height, $this.depth);
-    }
-    static [System.Windows.Media.Media3D.GeometryModel3D]CreateSphereModel([System.Windows.Media.Media3D.Point3D]$p0, [double]$w, [double]$h, [double]$d)
-    {
-        $mesh = New-Object System.Windows.Media.Media3D.MeshGeometry3D
-        $uri = New-Object System.Uri("$PSScriptRoot\..\Files\face.jpg")
-        $imagesource = New-Object System.Windows.Media.Imaging.BitmapImage $uri
-        $globe_brush = New-Object System.Windows.Media.ImageBrush $imagesource
-        $globe_material = New-Object System.Windows.Media.Media3D.DiffuseMaterial -Property @{Brush = $globe_brush}
-        $model = New-Object System.Windows.Media.Media3D.GeometryModel3D -ArgumentList $mesh, $globe_material
-        [Sphere]::MakeSphere($mesh, $globe_material, 1, -9.2, 0.6, 9.2, 20, 30);
-        return $model;
-    }
-}
 
-#$a = [Sphere]::new()
-#$a.CreateModel()
+    [Int]durationM([double]$seconds)
+    {
+        [int]$milliseconds = ($seconds * 1000);
+        return $milliseconds;
+    }
+
+    [System.TimeSpan]durationTS([double]$seconds)
+    {
+        $ts = New-Object System.TimeSpan(0, 0, 0, 0, $this.durationM($seconds));
+        return $ts;
+    }
+
+    [System.Windows.Media.Media3D.Point3D]centerBottom(){
+        [System.Windows.Media.Media3D.Point3D]$c = New-Object System.Windows.Media.Media3D.Point3D -ArgumentList(($this.origin.X + ($this.width / 2)),($this.origin.Y + $this.height),($this.origin.Z + ($this.depth / 2)));
+        return $c;
+    }
+    [System.Windows.Media.Media3D.Point3D]center(){
+        [System.Windows.Media.Media3D.Point3D]$c = New-Object System.Windows.Media.Media3D.Point3D -ArgumentList(($this.origin.X + ($this.width / 2)),($this.origin.Y - ($this.height / 2)),($this.origin.Z + ($this.depth / 2)));
+        return $c;
+    }
+    [System.Windows.Media.Media3D.Point3D]getCenter()
+    {
+        [System.Windows.Media.Media3D.Point3D]$center = New-Object System.Windows.Media.Media3D.Point3D(($this.origin.X + ($this.width / 2)), $this.origin.Y, ($this.origin.Z + ($this.depth / 2)));
+        return $center;
+    }
+    [System.Windows.Media.Media3D.Point3D]centerTop(){
+        [System.Windows.Media.Media3D.Point3D]$c = New-Object System.Windows.Media.Media3D.Point3D -ArgumentList(($this.origin.X + ($this.width / 2)),($this.origin.Y),($this.origin.Z + ($this.depth / 2)));
+        return $c;
+    }
+    [System.Windows.Media.Media3D.Point3D]GetOrigin(){
+        [System.Windows.Media.Media3D.Point3D]$c = "$($this.origin.X),$($this.origin.Y),$($this.origin.Z)";
+        return $c;
+    }
+
+    [System.Windows.Media.Media3D.Point3D]GetBoundsorigin(){
+        # Otetaan bounds sijainti ja lis‰t‰‰n vastaava koko puolikkaana tilalle, jotta saadaan origini tiet‰‰
+        $cx = ($this.SphereModelGroup.bounds.X + ($this.SphereModelGroup.Bounds.SizeX /2))
+        $cy = ($this.SphereModelGroup.bounds.Y + ($this.SphereModelGroup.Bounds.SizeY /2))
+        $cz = ($this.SphereModelGroup.bounds.Z + ($this.SphereModelGroup.Bounds.SizeZ /2))
+        $this.origin = "$($cx), $($cy), $($cz)"
+        $coords = "$($cx), $($cy), $($cz)"
+        [System.Windows.Media.Media3D.Point3D]$c = "$coords";
+        return $c;
+    }
+
+    [void]addMotionTransforms()
+    {
+        [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0);
+        [System.Windows.Media.Media3D.AxisAngleRotation3D]$rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($vector, 0.0);
+        $this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($rotation, ($this.GetBoundsorigin()));
+        $this.addTransform($this.SphereModelGroup, $this.rotateTransform);
+        $this.translateTransform = New-Object System.Windows.Media.Media3D.TranslateTransform3D(0, 0, 0);
+        $this.addTransform($this.SphereModelGroup, $this.translateTransform);
+    }
+    [void]addTransform([System.Windows.Media.Media3D.Model3DGroup]$model, [System.Windows.Media.Media3D.Transform3D]$transform)
+    {
+        [System.Windows.Media.Media3D.Transform3DGroup]$group = New-Object System.Windows.Media.Media3D.Transform3DGroup
+        if ($model.Transform -ne $null -and $model.Transform -ne [System.Windows.Media.Media3D.Transform3D]::Identity)
+        {
+            if ($model.Transform -is [System.Windows.Media.Media3D.Transform3D])
+            {
+                $group.Children.Add($model.Transform);
+            }
+            elseif ($model.Transform -is [System.Windows.Media.Media3D.Transform3DGroup])
+            {
+                # T‰t‰ tarvitaan, jos tehd‰‰n esim. pallolle animoidut k‰det :D, ent‰ jalat? - ei palloilla ole jalkoja dummy...
+                [System.Windows.Media.Media3D.Transform3DGroup]$g = $this.SphereModelGroup($model.Transform)
+                foreach ($t in $g.Children)
+                {
+                    $group.Children.Add($t);
+                }
+            }
+        }
+        $group.Children.Add($transform);
+        $model.Transform = $group;
+    }
+
+	[void]Rotate([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle){
+        $rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($axis, $angle);
+        $this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotation), ($this.GetBoundsorigin()));
+        $this.addTransform($this.SphereModelGroup, $this.rotateTransform)
+	}
+    [Void]Move([System.Windows.Media.Media3D.Vector3D]$direction, [double]$amount){
+        $this.translateTransform = New-Object System.Windows.Media.Media3D.TranslateTransform3D(($direction*$amount))
+        $this.addTransform($this.SphereModelGroup, $this.translateTransform)
+    }
+
+    [Void]Jump(){
+        [System.Windows.Media.Animation.StoryBoard]$storyboard = [System.Windows.Media.Animation.StoryBoard]::new()
+        Write-Warning "Jumppia kutsuttu"        
+
+    }
+
+}
 
