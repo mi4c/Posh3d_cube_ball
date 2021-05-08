@@ -18,12 +18,16 @@
 <# 
 .DESCRIPTION 
  3D fun stuff with powershell
-.NOTES
-    This powershell script is build up from c-sharp learning material and examples that is available via internet.
-    http://csharphelper.com/blog/2014/10/create-a-3d-surface-more-quickly-with-wpf-xaml-and-c/
-    http://csharphelper.com/blog/2017/05/make-3d-globe-wpf-c/
-    https://www.codeproject.com/Articles/125694/How-To-Make-A-Walking-Robot-In-WPF-Part-3-Emissive
-    https://www.codeproject.com/Articles/1087090/WFTools-D-A-Small-WPF-Library-To-Build-D-Simulatio
+.NOTES    
+    This powershell script is build up based from c-sharp learning material and examples that is available via internet.
+    - http://csharphelper.com/blog/2014/10/create-a-3d-surface-more-quickly-with-wpf-xaml-and-c/
+    - http://csharphelper.com/blog/2017/05/make-3d-globe-wpf-c/
+    - https://www.codeproject.com/Articles/125694/How-To-Make-A-Walking-Robot-In-WPF-Part-3-Emissive
+    - https://www.codeproject.com/Articles/1087090/WFTools-D-A-Small-WPF-Library-To-Build-D-Simulatio
+    Also some minor example how to do something in powershell was found from here
+    - https://gist.github.com/nikonthethird/2ab6bfad9a81d5fe127fd0d1c2844b7c
+    - https://devblogs.microsoft.com/scripting/weekend-scripter-create-a-holiday-greeting-using-powershell-and-wpf/
+
 #> 
 Using Assembly PresentationCore
 Using Assembly PresentationFramework
