@@ -17,7 +17,13 @@
 
 <# 
 .DESCRIPTION 
- How to do some 3D stuff 
+ 3D fun stuff with powershell
+.NOTES
+    This powershell script is build up from c-sharp learning material and examples that is available via internet.
+    http://csharphelper.com/blog/2014/10/create-a-3d-surface-more-quickly-with-wpf-xaml-and-c/
+    http://csharphelper.com/blog/2017/05/make-3d-globe-wpf-c/
+    https://www.codeproject.com/Articles/125694/How-To-Make-A-Walking-Robot-In-WPF-Part-3-Emissive
+    https://www.codeproject.com/Articles/1087090/WFTools-D-A-Small-WPF-Library-To-Build-D-Simulatio
 #> 
 Using Assembly PresentationCore
 Using Assembly PresentationFramework
@@ -46,14 +52,14 @@ Using Namespace System.Text
 
 <#
     .SYNOPSIS
-    Shows 3D surface
+    Move ball
     .DESCRIPTION
-    How to draw 3D stuff with powershell
+    3D fun stuff with powershell
     This example is built from instruction examples found at http://csharphelper.com/blog/2014/10/draw-a-3d-surface-with-wpf-xaml-and-c/
     .NOTES
     SCRIPT REVISION NOTES:
     INIT  DATE        VERSION    NOTES
-    MK    2021-04-06  1.0        Initial Script Release
+    MK    2019-12-29  1.0        Initial Script Release
 #>
 function Cleanup-Variables {
     <#
@@ -299,14 +305,6 @@ $test.window.Add_Loaded({
     [double]$camera.amount = 0.00
     [double]$Camera.amount *= $Camera.Scale
     $timer.Start()
-    [int]$global:lasthour = 10
-#    Write-Warning $lasthour
-#    Write-Warning $timer.Interval.Seconds
-#    Write-Warning ($MainViewPort.children.content.children | ConvertTo-Json)
-    $global:changelight = "päivä"
-    Write-Warning ($visual.Content.children | ConvertTo-Json)
-    $hah = $visual | Where-Object {$_.Content.children.color -eq "#FF808080"}
-    Write-warning ($hah | ConvertTo-Json)
 })
 
 [Int32] $stepsMilliseconds = 50
@@ -319,27 +317,6 @@ Function TimerTick([object]$sender, [EventArgs]$e)
 		{
 		}
 $timer.add_Tick({
-    [int]$global:treshold = ([int]$treshold + 1)
-    if($treshold -gt $lasthour){
-        $global:lasthour = $lasthour + 10
-#        Write-Warning "$lasthour $($timer.Interval.Seconds)"
-        
-#        $MainViewPort.children.Clear($visual)
-#        if($changelight -eq "päivä"){
-#            $visual = New-Object System.Windows.Media.Media3D.ModelVisual3D
-#            $groupScene.Children.Add((new-object System.Windows.Media.Media3D.AmbientLight -property @{Color = 'black'}))
-#            $visual.Content = $groupScene
-#            $MainViewPort.Children.Add($visual)
-#            $global:changelight = "ilta"
-#        }
-#        if($changelight -eq "ilta"){
-#            $visual = New-Object System.Windows.Media.Media3D.ModelVisual3D
-#            $groupScene.Children.Add((new-object System.Windows.Media.Media3D.AmbientLight -property @{Color = 'gray'}))
-#            $visual.Content = $groupScene
-#            $MainViewPort.Children.Add($visual)
-#            $global:changelight = "päivä"
-#        }
-    }
 	if($Camera.MovingUpDirectionIsLocked -eq $true){
         $camera.Move($camera.camera.LookDirection, +$camera.amount)
         $ball.Move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
