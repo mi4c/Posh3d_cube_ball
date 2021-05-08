@@ -17,7 +17,7 @@
 
 <# 
 .DESCRIPTION 
- How to create 3D surface 
+ How to do some 3D stuff 
 #> 
 Using Assembly PresentationCore
 Using Assembly PresentationFramework
@@ -48,12 +48,12 @@ Using Namespace System.Text
     .SYNOPSIS
     Shows 3D surface
     .DESCRIPTION
-    How to draw 3D surface with powershell
+    How to draw 3D stuff with powershell
     This example is built from instruction examples found at http://csharphelper.com/blog/2014/10/draw-a-3d-surface-with-wpf-xaml-and-c/
     .NOTES
     SCRIPT REVISION NOTES:
     INIT  DATE        VERSION    NOTES
-    MK    2019-12-29  1.0        Initial Script Release
+    MK    2021-04-06  1.0        Initial Script Release
 #>
 function Cleanup-Variables {
     <#
