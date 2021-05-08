@@ -1,2 +1,3 @@
 # Posh3d_cube_ball
 This was just my test how to do some 3D graphics with powershell...
+And to get more familiar with powershell classes.
