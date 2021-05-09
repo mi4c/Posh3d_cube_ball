@@ -171,7 +171,7 @@ Class Sphere{
         {
             $sphere_mesh = New-Object System.Windows.Media.Media3D.MeshGeometry3D;
             $new_model = New-Object System.Windows.Media.Media3D.GeometryModel3D($sphere_mesh, $sphere_material);
-            if(-Not $transparent){
+            if($transparent){
                 $new_model.BackMaterial = $globe_BackMaterial
             }
             $model_group.Children.Add($new_model)
@@ -255,26 +255,24 @@ Class Sphere{
     }
 
     # Add the model to the Model3DGroup.
-#    DefineModel([System.Windows.Media.Media3D.Model3DGroup]$model_group)
     DefineModel($imagefile,[Bool]$transparent)
     {
         # Globe. Place it in a new model so we can transform it.
         [System.Windows.Media.Media3D.Model3DGroup]$globe_model = New-Object System.Windows.Media.Media3D.Model3DGroup
-#        $model_group.Children.Add($globe_model);
         $this.SphereModelGroup.Children.Add($globe_model);
         
         $uri = New-Object System.Uri("$PSScriptRoot\..\Files\$imagefile")
-#        $uri = New-Object System.Uri("$PSScriptRoot\..\Files\face.jpg")
         $imagesource = New-Object System.Windows.Media.Imaging.BitmapImage $uri
-        $globe_brush = New-Object System.Windows.Media.ImageBrush $imagesource
+        if($transparent){
+            $globe_brush = New-Object System.Windows.Media.ImageBrush -Property @{ImageSource = $imagesource; Opacity = 0.5}
+        } else {
+            $globe_brush = New-Object System.Windows.Media.ImageBrush $imagesource
+        }
         $globe_material = New-Object System.Windows.Media.Media3D.DiffuseMaterial -Property @{Brush = $globe_brush}
         $globe_BackMaterial = $globe_material
         
         [System.Windows.Media.Media3D.MeshGeometry3D]$globe_mesh = $null;
-#        [Sphere]::MakeSphere($globe_model, ($globe_mesh), $globe_material, 1, 2.74066683953478,0.6,8.00816300307612, 20, 30);
-        Write-Warning "$($this.startX) $($this.startY) $($this.startZ)"
         [Sphere]::MakeSphere($globe_model, ($globe_mesh), $globe_material, $this.startradius, $($this.startX),$($this.startY),$($this.startZ), $this.startphi, $this.starttheta,$globe_BackMaterial,$transparent);
-#        [Sphere]::MakeSphere($globe_model, ($globe_mesh), $globe_material, 1, $($this.startX),$($this.startY),$($this.startZ), 20, 30);
     }
 
     [Int]durationM([double]$seconds)
@@ -343,6 +341,7 @@ Class Sphere{
             elseif ($model.Transform -is [System.Windows.Media.Media3D.Transform3DGroup])
             {
                 # T‰t‰ tarvitaan, jos tehd‰‰n esim. pallolle animoidut k‰det :D, ent‰ jalat? - ei palloilla ole jalkoja dummy...
+                # this will be needed if I create ball some animated hands, or eyes etc...
                 [System.Windows.Media.Media3D.Transform3DGroup]$g = $this.SphereModelGroup($model.Transform)
                 foreach ($t in $g.Children)
                 {
@@ -363,12 +362,5 @@ Class Sphere{
         $this.translateTransform = New-Object System.Windows.Media.Media3D.TranslateTransform3D(($direction*$amount))
         $this.addTransform($this.SphereModelGroup, $this.translateTransform)
     }
-
-    [Void]Jump(){
-        [System.Windows.Media.Animation.StoryBoard]$storyboard = [System.Windows.Media.Animation.StoryBoard]::new()
-        Write-Warning "Jumppia kutsuttu"        
-
-    }
-
 }
 

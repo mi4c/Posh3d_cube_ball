@@ -220,7 +220,6 @@ function turnModel{
     $rotation3.BeginAnimation([System.Windows.Media.Media3D.AxisAngleRotation3D]::AngleProperty, $doubleAnimation3);
 }
 
-
 Class Scene{
     static [double]$scenesize = 20
 }
@@ -261,9 +260,6 @@ Class Window{
         [double]$TotalJumpduration = 0.0
         [double]$walkDuration = 3.4
         [Double]$velocity = 0.5
-        
-#        $namescope = (New-Object System.Windows.Namescope).SetNameScope($this,(New-Object System.Windows.Namescope))
-#        $namescope::SetNameScope($this,(New-Object System.Windows.Namescope))
 
         $storyboard = New-Object System.Windows.Media.Animation.StoryBoard
         $doubleAnimationX1 = New-Object System.Windows.Media.Animation.DoubleAnimation(0, 0, ($this.durationTS($velocity)))
@@ -313,16 +309,10 @@ Class Window{
     }
 }
 
-
-Function myAmbientLight{
-    $newcolor = (new-object System.Windows.Media.Media3D.AmbientLight -property @{Color = 'black'})
-    $transformgroup.Children.Add($newcolor)
-}
-
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
 # Tee Window luokka ja suorita se
-$mainWindow = [Window]::new([System.Xml.XmlNodeReader]$reader,[System.Windows.Window]$window)
+$global:mainWindow = [Window]::new([System.Xml.XmlNodeReader]$reader,[System.Windows.Window]$window)
 $mainWindow.window.Add_Loaded({
     $mainWindow.window.content.ShowGridLines = $true
     $mainWindow.window.content.Background = 'Black'
@@ -336,9 +326,9 @@ $mainWindow.window.Add_Loaded({
     [System.Windows.Media.Media3D.Model3DGroup]$global:groupScene = New-Object System.Windows.Media.Media3D.Model3DGroup
     [Sphere]$sphere = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize / 100), ([scene]::scenesize / 100), ([scene]::scenesize / 100),2.74066683953478,0.6,8.00816300307612)
     [Sphere]$spheresky = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize), ([scene]::scenesize), ([scene]::scenesize),0,0,0)
-    [Sphere]$global:ball = [Sphere]::New($sphere,2.74066683953478,1.0,8.00816300307612,1,20,30,"face.jpg",$true)
-    [Sphere]$opponentball = [Sphere]::New($sphere,0,1.0,0,1,20,30,"face.jpg",$true)
-    [Sphere]$sky = [Sphere]::New($spheresky,0,0.0,0,50,20,30,"Sky.jpg",$false)
+    [Sphere]$global:ball = [Sphere]::New($sphere,2.74066683953478,1.0,8.00816300307612,1,20,30,"face.jpg",$false)
+    [Sphere]$opponentball = [Sphere]::New($sphere,0,1.0,0,1,20,30,"face.jpg",$false)
+    [Sphere]$sky = [Sphere]::New($spheresky,0,0.0,0,50,20,30,"Sky.jpg",$true)
     # add our cube to the model group
     $groupScene.Children.Add($cubeModel)
     $groupScene.Children.Add($floorModel)
@@ -379,18 +369,19 @@ $mainWindow.window.Add_Loaded({
     [double]$camera.amount = 0.00
     [double]$Camera.amount *= $Camera.Scale
     $timer.Start()
+    [double]$camera.amount = ([double]$camera.amount + 0.08)
 })
 
-[Int32] $stepsMilliseconds = 50
+[Int32] $stepsMilliseconds = 20
 
 [DispatcherTimer] $timer = New-Object DispatcherTimer -Property @{
     Interval = New-Object TimeSpan 0, 0, 0, 0, $stepsMilliseconds
 }
 
-Function TimerTick([object]$sender, [EventArgs]$e)
-		{
-		}
+#Function TimerTick([object]$sender, [EventArgs]$e){}
+
 $timer.add_Tick({
+    # here need to change the way how moving is done, with a too fast timer powershell crashes quite fast
 	if($Camera.MovingUpDirectionIsLocked -eq $true){
         $camera.Move($camera.camera.LookDirection, +$camera.amount)
         $ball.Move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
@@ -405,7 +396,10 @@ $timer.add_Tick({
         $camera3.Move($camera.camera.LookDirection, -$camera.amount)
     }
 })
-[System.Windows.EventManager]::RegisterClassHandler([system.windows.Window], [Keyboard]::KeyDownEvent , [KeyEventHandler]{
+
+# Changed the way how to read button inputs.
+#[System.Windows.EventManager]::RegisterClassHandler([system.windows.Window], [Keyboard]::KeyDownEvent , [KeyEventHandler]{
+$window.Add_KeyDown({
     Param ([Object] $sender, [System.Windows.Input.KeyEventArgs]$eventArgs)
         Switch ($eventArgs.key){
             'up'{
@@ -414,6 +408,7 @@ $timer.add_Tick({
                     [double]$camera.amount = 0.00
                     $Camera.MovingDownDirectionIsLocked = $false
                     $Camera.MovingUpDirectionIsLocked = $true
+                    $timer.Stop()
                     Break;
                 }
                 elseif($camera.amount -le 0.34) {
@@ -421,6 +416,7 @@ $timer.add_Tick({
                     [double]$Camera.amount *= $Camera.Scale
                     $Camera.MovingDownDirectionIsLocked = $false
                     $Camera.MovingUpDirectionIsLocked = $true
+                    $timer.Start()
                     Break;
                 }
             }
@@ -430,6 +426,7 @@ $timer.add_Tick({
                     [double]$camera.amount = 0.00
                     $Camera.MovingUpDirectionIsLocked = $false
                     $Camera.MovingDownDirectionIsLocked = $true
+                    $timer.Stop()
                     Break;
                 }
                 elseif($camera.amount -le 0.34) {
@@ -437,6 +434,7 @@ $timer.add_Tick({
                     [double]$Camera.amount *= $Camera.Scale
                     $Camera.MovingUpDirectionIsLocked = $false
                     $Camera.MovingDownDirectionIsLocked = $true
+                    $timer.Start()
                     Break;
                 }
             }
@@ -518,17 +516,8 @@ $timer.add_Tick({
         }
 })
 
-
-[System.Windows.EventManager]::RegisterClassHandler([system.windows.Window], [Keyboard]::KeyUpEvent , [KeyEventHandler] {
-Param ([Object] $sender, [System.Windows.Input.KeyEventArgs]$eventArgs)
-    # This was used earlier to stop moving the ball currently no use of this.
-})
-
-
-
 $mainWindow.window.ShowDialog() | Out-Null
 
-#$mainWindow.ShowDialog() | Out-Null
 Cleanup-Variables
 
 

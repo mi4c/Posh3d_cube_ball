@@ -16,8 +16,7 @@
     [Bool]$MovingUpDirectionIsLocked
     [Bool]$MovingDownDirectionIsLocked
     [String]$Stopmoving
-
-
+    
     [Void] add_PropertyChanged([System.ComponentModel.PropertyChangedEventHandler] $propertyChanged) {
         $this.PropertyChanged = [Delegate]::Combine($this.PropertyChanged, $propertyChanged)
     }
@@ -266,11 +265,9 @@
 
     [System.Windows.Media.Media3D.Vector3D]LeftDirection(){
         Return [System.Windows.Media.Media3D.Vector3D]::CrossProduct($this.Camera.UpDirection,($this.Camera.LookDirection))        
-        #Return ($this.Camera.UpDirection.cross($this.Camera.LookDirection))
     }
     [System.Windows.Media.Media3D.Vector3D]RightDirection(){
         Return [System.Windows.Media.Media3D.Vector3D]::CrossProduct($this.Camera.LookDirection,($this.Camera.UpDirection))
-        #Return ($this.Camera.LookDirection.cross($this.Camera.UpDirection))
     }
 
     [Double]RollAngle(){
@@ -325,7 +322,10 @@
 
 	[void]Rotate([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle){
 		[System.Windows.Media.Media3D.Quaternion]$q = ([Math3D]::Rotation($axis, $angle));
+        # this would be needed to add roll behaviour, but it mess the origin as this rotate is planned for a moving air plane
 		#$this.camera.Position = [Math3D]::Transform($q,$this.camera.Position);
+
+        # this would be needed to add roll behaviour, but it mess the origin as this rotate is planned for a moving air plane
 		#$this.camera.UpDirection = [Math3D]::Transform($q,$this.camera.UpDirection);
 		$this.camera.LookDirection = [Math3D]::Transform($q,$this.camera.LookDirection);        
 	}
@@ -409,6 +409,7 @@
             }
 		} else {
 			[double]$factor = [Math]::Log10([Math]::Abs($this.Speed) + 1);			
+            # this might be the fix for the rotate roll angle origin mess, investigate it in future...
             #[double]$angle = [MathUtils]::ToRadians($this.RollAngle);
 			#$this.ChangeHeading($factor * [Math]::Sin($angle)); # makes 15 degrees per second at speed 9 and roll angle 30
 			$this.Move($this.MovingDirection, $this.Speed * $this.Scale / 300.0); # makes 1 world unit per second at speed 10 and scale 1
