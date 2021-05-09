@@ -94,7 +94,6 @@ function Cleanup-Variables {
 . .\class\WpfCube.ps1
 . .\class\WpfCylinder.ps1
 . .\class\WpfSphere.ps1
-. .\class\storyboard.ps1
 . .\class\camerabox.ps1
 . .\class\scene3d.ps1
 
@@ -243,7 +242,77 @@ Class Window{
         $this.reader = $reader
         $this.window = $window
     }
+
+    [Int]durationM([double]$seconds)
+    {
+        [int]$milliseconds = ($seconds * 1000);
+        return $milliseconds;
+    }
+
+    [System.TimeSpan]durationTS([double]$seconds)
+    {
+        $ts = New-Object System.TimeSpan(0, 0, 0, 0, $this.durationM($seconds));
+        return $ts;
+    }
+
+    [Void]Storyboard($namespace,$modelgroup,$TranslateTransform3D,$action){
+        [double]$turnDuration = 0.7
+        [double]$Totalduration = 0.0
+        [double]$TotalJumpduration = 0.0
+        [double]$walkDuration = 3.4
+        [Double]$velocity = 0.5
+        
+#        $namescope = (New-Object System.Windows.Namescope).SetNameScope($this,(New-Object System.Windows.Namescope))
+#        $namescope::SetNameScope($this,(New-Object System.Windows.Namescope))
+
+        $storyboard = New-Object System.Windows.Media.Animation.StoryBoard
+        $doubleAnimationX1 = New-Object System.Windows.Media.Animation.DoubleAnimation(0, 0, ($this.durationTS($velocity)))
+        $doubleAnimationY1 = New-Object System.Windows.Media.Animation.DoubleAnimation(0, 0.5, ($this.durationTS($velocity)))
+        $doubleAnimationZ1 = New-Object System.Windows.Media.Animation.DoubleAnimation(0, 0, ($this.durationTS($velocity)))
+        $OffsetXProperty = New-Object System.Windows.Media.Media3D.TranslateTransform3D
+        $OffsetYProperty = New-Object System.Windows.Media.Media3D.TranslateTransform3D
+        $OffsetZProperty = New-Object System.Windows.Media.Media3D.TranslateTransform3D
+        
+        [double]$offset = [Scene]::sceneSize * 0.45
+
+        $storyboard::SetTargetName($doubleAnimationX1,"MoveTransform")
+        $storyboard::SetTargetProperty($doubleAnimationX1, (New-Object System.Windows.PropertyPath($OffsetXProperty::OffsetXProperty)))
+        $storyboard::SetTargetName($doubleAnimationY1,"MoveTransform")
+        $storyboard::SetTargetProperty($doubleAnimationY1, (New-Object System.Windows.PropertyPath($OffsetYProperty::OffsetYProperty)))
+        $storyboard::SetTargetName($doubleAnimationZ1,"MoveTransform")
+        $storyboard::SetTargetProperty($doubleAnimationZ1, (New-Object System.Windows.PropertyPath($OffsetZProperty::OffsetZProperty)))
+        $storyboard.Children.Add($doubleAnimationY1)
+        $doubleAnimationY1.BeginTime = ($this.durationTS($totalDuration))
+        if($action -eq "jump"){
+            $TotalJumpduration += $velocity
+        } else {
+            $Totalduration += $walkDuration
+        }
+        if($action){
+            $velocity = 0.5
+            $doubleAnimationX2 = New-Object System.Windows.Media.Animation.DoubleAnimation(0, 0, ($this.durationTS($velocity)))
+            $doubleAnimationY2 = New-Object System.Windows.Media.Animation.DoubleAnimation(0.5, 0, ($this.durationTS($velocity)))
+            $doubleAnimationZ2 = New-Object System.Windows.Media.Animation.DoubleAnimation(0, 0, ($this.durationTS($velocity)))
+            $storyboard::SetTargetName($doubleAnimationX2,"MoveTransform")
+            $storyboard::SetTargetProperty($doubleAnimationX2, (New-Object System.Windows.PropertyPath($OffsetXProperty::OffsetXProperty)))
+            $storyboard::SetTargetName($doubleAnimationY2,"MoveTransform")
+            $storyboard::SetTargetProperty($doubleAnimationY2, (New-Object System.Windows.PropertyPath($OffsetYProperty::OffsetYProperty)))
+            $storyboard::SetTargetName($doubleAnimationZ2,"MoveTransform")
+            $storyboard::SetTargetProperty($doubleAnimationZ2, (New-Object System.Windows.PropertyPath($OffsetZProperty::OffsetZProperty)))
+            $storyboard.Children.Add($doubleAnimationX2)
+            $storyboard.Children.Add($doubleAnimationY2)
+            $storyboard.Children.Add($doubleAnimationZ2)
+            $doubleAnimationX2.BeginTime = ($this.durationTS($velocity))
+            $doubleAnimationY2.BeginTime = ($this.durationTS($velocity))
+            $doubleAnimationZ2.BeginTime = ($this.durationTS($velocity))
+            $TotalJumpduration += $velocity
+        }
+
+        $Storyboard.RepeatBehavior = "1x"
+        $storyboard.Begin($namespace)
+    }
 }
+
 
 Function myAmbientLight{
     $newcolor = (new-object System.Windows.Media.Media3D.AmbientLight -property @{Color = 'black'})
@@ -253,11 +322,11 @@ Function myAmbientLight{
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
 # Tee Window luokka ja suorita se
-$test = [Window]::new([System.Xml.XmlNodeReader]$reader,[System.Windows.Window]$window)
-$test.window.Add_Loaded({
-    $test.window.content.ShowGridLines = $true
-    $test.window.content.Background = 'Black'
-    $Global:MainViewPort = $test.window.FindName('MainViewport')
+$mainWindow = [Window]::new([System.Xml.XmlNodeReader]$reader,[System.Windows.Window]$window)
+$mainWindow.window.Add_Loaded({
+    $mainWindow.window.content.ShowGridLines = $true
+    $mainWindow.window.content.Background = 'Black'
+    $Global:MainViewPort = $mainWindow.window.FindName('MainViewport')
     # create a cube with dimensions as some fraction of the scene size
     [WpfCube]$cube = [WpfCube]::new($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize / 6), ([scene]::scenesize / 6), ([scene]::scenesize / 6))
     # construct our geometry model from the cube object
@@ -440,10 +509,10 @@ $timer.add_Tick({
                 Break;
             }
             'space'{
-                Write-Warning "välilyöntiä painettu"
-                # Tähän kutsu animointiin, jotta saadaan pallo hyppää animoidusti
+                # Set Name Scope and register it with translate transform
                 [System.Windows.Namescope]::SetNameScope($this,[system.windows.NameScope]::new())
-                $ball.jump()
+                $this.RegisterName("MoveTransform", ($ball.getTranslateTransform()))
+                $mainWindow.Storyboard($this,($ball.GetModelGroup()),"Jump",($ball.getTranslateTransform()))
                 Break;
             }
         }
@@ -457,7 +526,7 @@ Param ([Object] $sender, [System.Windows.Input.KeyEventArgs]$eventArgs)
 
 
 
-$test.window.ShowDialog() | Out-Null
+$mainWindow.window.ShowDialog() | Out-Null
 
 #$mainWindow.ShowDialog() | Out-Null
 Cleanup-Variables
