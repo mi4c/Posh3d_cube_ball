@@ -31,6 +31,7 @@
 #> 
 Using Assembly PresentationCore
 Using Assembly PresentationFramework
+Using Namespace System
 Using Namespace System.Windows
 Using Namespace System.Drawing
 using namespace Microsoft.Windows.PowerShell.Gui.Internal
@@ -51,6 +52,11 @@ Using Namespace System.ComponentModel
 Using Namespace System.Linq
 Using Namespace System.Reflection
 Using Namespace System.Text
+using Namespace System.Windows.Navigation;
+using Namespace System.Windows.Data;
+using Namespace System.Windows.Documents;
+using Namespace System.Windows.Media.Imaging;
+using Namespace System.Windows.Shapes;
 [System.Reflection.Assembly]::LoadWithPartialName("System.Drawing") | Out-Null
 
 
@@ -370,9 +376,28 @@ $mainWindow.window.Add_Loaded({
     [double]$Camera.amount *= $Camera.Scale
     $timer.Start()
     [double]$camera.amount = ([double]$camera.amount + 0.08)
+    $MainviewPort.Add_MouseDown({
+        Param ([Object] $sender, [MouseButtonEventArgs]$eventArgs)
+        $mouse_position = $eventArgs.GetPosition($MainViewPort)
+        Write-Warning $mouse_position
+        [HitTestResult]$result = [VisualTreeHelper]::HitTest($MainViewPort, $mouse_position)
+        [RayMeshGeometry3DHitTestResult]$mesh_result = $result -as [RayMeshGeometry3DHitTestResult]
+        if($mesh_result -eq $null){            
+        } Else {
+            Write-Warning ($mesh_result)
+            Write-Warning $mesh_result.DistanceToRayOrigin
+            Write-Warning $mesh_result.PointHit.ToString()
+            [MeshGeometry3D]$mesh = $mesh_result.MeshHit
+            Write-Warning $mesh.positions[$mesh_result.VertexIndex1].toString()
+            Write-Warning $mesh.positions[$mesh_result.VertexIndex2].toString()
+            Write-Warning $mesh.positions[$mesh_result.VertexIndex3].toString()
+        }
+
+    })
+
 })
 
-[Int32] $stepsMilliseconds = 20
+[Int32] $stepsMilliseconds = 100
 
 [DispatcherTimer] $timer = New-Object DispatcherTimer -Property @{
     Interval = New-Object TimeSpan 0, 0, 0, 0, $stepsMilliseconds
@@ -515,6 +540,7 @@ $window.Add_KeyDown({
             }
         }
 })
+
 
 $mainWindow.window.ShowDialog() | Out-Null
 
