@@ -18,7 +18,7 @@ cam2 ball movement cam
 
 cam3 ball lookcam, so you can look also up without messing the moving algorithm.
 https://github.com/mi4c/Posh3d_cube_ball
-![myimage-alt-tag](https://github.com/mi4c/Posh3d_cube_ball/tree/main/Screenshots/fun1.PNG)
-![myimage-alt-tag](https://github.com/mi4c/Posh3d_cube_ball/tree/main/Screenshots/fun2.PNG)
-![myimage-alt-tag](https://github.com/mi4c/Posh3d_cube_ball/tree/main/Screenshots/fun3.PNG)
+![fun1](https://github.com/mi4c/Posh3d_cube_ball/tree/main/Screenshots/fun1.PNG)
+![fun2](https://github.com/mi4c/Posh3d_cube_ball/tree/main/Screenshots/fun2.PNG)
+![fun3](https://github.com/mi4c/Posh3d_cube_ball/tree/main/Screenshots/fun3.PNG)
 
