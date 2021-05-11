@@ -317,6 +317,10 @@ Class Window{
 
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
+# record of the 3D models we build
+#$models = New-Object System.Collections.Generic.Dictionary[Model3D,String]
+$Global:models = @{}
+
 # Tee Window luokka ja suorita se
 $global:mainWindow = [Window]::new([System.Xml.XmlNodeReader]$reader,[System.Windows.Window]$window)
 $mainWindow.window.Add_Loaded({
@@ -327,14 +331,20 @@ $mainWindow.window.Add_Loaded({
     [WpfCube]$cube = [WpfCube]::new($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize / 6), ([scene]::scenesize / 6), ([scene]::scenesize / 6))
     # construct our geometry model from the cube object
     [System.Windows.Media.Media3D.GeometryModel3D]$cubeModel = $cube.CreateModel([System.Drawing.Color]::Aquamarine)
+    $models.Add($cubeModel,"CubeModel")
     [System.Windows.Media.Media3D.GeometryModel3D]$floorModel = [WpfCube]::CreateCubeModel("$(-([scene]::scenesize / 2),-($floorthickness),-([scene]::scenesize/2))",([scene]::scenesize),$floorthickness,[scene]::scenesize,[System.Drawing.Color]::Tan)
+    $models.Add($floorModel,"Floor")
     # create a model group to hold our model
     [System.Windows.Media.Media3D.Model3DGroup]$global:groupScene = New-Object System.Windows.Media.Media3D.Model3DGroup
     [Sphere]$sphere = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize / 100), ([scene]::scenesize / 100), ([scene]::scenesize / 100),2.74066683953478,0.6,8.00816300307612)
     [Sphere]$spheresky = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize), ([scene]::scenesize), ([scene]::scenesize),0,0,0)
-    [Sphere]$global:ball = [Sphere]::New($sphere,2.74066683953478,1.0,8.00816300307612,1,20,30,"face.jpg",$false)
-    [Sphere]$opponentball = [Sphere]::New($sphere,0,1.0,0,1,20,30,"face.jpg",$false)
-    [Sphere]$sky = [Sphere]::New($spheresky,0,0.0,0,50,20,30,"Sky.jpg",$true)
+    [Sphere]$global:ball = [Sphere]::New($sphere,2.74066683953478,1.0,8.00816300307612,1,20,30,"face.jpg",$false,"Ball1",$models)
+    $models.Add($ball.SphereModelGroup,"Ball1")
+    [Sphere]$opponentball = [Sphere]::New($sphere,0,1.0,0,1,20,30,"face.jpg",$false,"Ball2",$models)
+    $models.Add($opponentball.SphereModelGroup,"Ball2")
+    [Sphere]$sky = [Sphere]::New($spheresky,0,0.0,0,50,20,30,"Sky.jpg",$true,"Sky",$models)
+    $models.Add($sky.SphereModelGroup,"Sky")
+    #$models.Add($opponentball.SphereModelGroup,"Sky")
     # add our cube to the model group
     $groupScene.Children.Add($cubeModel)
     $groupScene.Children.Add($floorModel)
@@ -382,15 +392,15 @@ $mainWindow.window.Add_Loaded({
         Write-Warning $mouse_position
         [HitTestResult]$result = [VisualTreeHelper]::HitTest($MainViewPort, $mouse_position)
         [RayMeshGeometry3DHitTestResult]$mesh_result = $result -as [RayMeshGeometry3DHitTestResult]
-        if($mesh_result -eq $null){            
-        } Else {
-            Write-Warning ($mesh_result)
-            Write-Warning $mesh_result.DistanceToRayOrigin
-            Write-Warning $mesh_result.PointHit.ToString()
+        if($mesh_result -ne $null){
+            Write-warning ($models[$mesh_result.ModelHit])
+#            Write-Warning ($mesh_result)
+#            Write-Warning $mesh_result.DistanceToRayOrigin
+#            Write-Warning $mesh_result.PointHit.ToString()
             [MeshGeometry3D]$mesh = $mesh_result.MeshHit
-            Write-Warning $mesh.positions[$mesh_result.VertexIndex1].toString()
-            Write-Warning $mesh.positions[$mesh_result.VertexIndex2].toString()
-            Write-Warning $mesh.positions[$mesh_result.VertexIndex3].toString()
+#            Write-Warning $mesh.positions[$mesh_result.VertexIndex1].toString()
+#            Write-Warning $mesh.positions[$mesh_result.VertexIndex2].toString()
+#            Write-Warning $mesh.positions[$mesh_result.VertexIndex3].toString()
         }
 
     })
