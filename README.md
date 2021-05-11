@@ -1,5 +1,5 @@
 # Posh3d_cube_ball
-My Background, i'm not a coder or advanced powershell scripter, just some n00b scripter. If I would be a coder I would have done this all with some other language.
+My Background, i'm not a coder or advanced powershell scripter, just some n00b scripter. If I would be a coder I would have done this all with some other language. Or I would have used Unity or Blender... I just want to do pure powershell...
 I have some basic skills to do some powershell scripting and I do understand little c-sharp to be able to translate it to powershell code.
 Many examples rely on injecting c-sharp code into powershell code, I try to avoid that and stay with the pure powershell syntax.
 I really don't think I'm an advanced powershell scripter even I do share this "for fun" created script, that I do develop continuously. - I have to remember edit this sentence when I stop developing it. :D
