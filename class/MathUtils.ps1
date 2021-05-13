@@ -200,34 +200,6 @@ class Math3D {
 		return ([Math3D]::Transform([System.Windows.Media.Media3D.Quaternion]$q,[System.Windows.Media.Media3D.Vector3D]$p));
 	}
 
-	# Rotates a vector using a quaternion.
-	static [System.Windows.Media.Media3D.Vector3D]Transform2([System.Windows.Media.Media3D.Quaternion]$q, [System.Windows.Media.Media3D.Vector3D]$v)
-	{
-		[double]$x2 = $q.X + $q.X;
-		[double]$y2 = $q.Y + $q.Y;
-		[double]$z2 = $q.Z + $q.Z;
-		[double]$wx2 = $q.W * $x2;
-		[double]$wy2 = $q.W * $y2;
-		[double]$wz2 = $q.W * $z2;
-		[double]$xx2 = $q.X * $x2;
-		[double]$xy2 = $q.X * $y2;
-		[double]$xz2 = $q.X * $z2;
-		[double]$yy2 = $q.Y * $y2;
-		[double]$yz2 = $q.Y * $z2;
-		[double]$zz2 = $q.Z * $z2;
-		[double]$x = $v.X * (1.0 - $yy2 - $zz2) + $v.Y * ($xy2 - $wz2) + $v.Z * ($xz2 + $wy2);
-		[double]$y = $v.X * ($xy2 + $wz2) + $v.Y * (0.0 - $xx2 - $zz2) + $v.Z * ($yz2 - $wx2);
-		[double]$z = $v.X * ($xz2 - $wy2) + $v.Y * ($yz2 + $wx2) + $v.Z * (0.0 - $xx2 - $yy2);
-		return (New-Object System.Windows.Media.Media3D.Vector3D($x, $y, $z));
-	}
-
-	# Rotates a point using a quaternion.
-	static [System.Windows.Media.Media3D.Point3D]Transform2([System.Windows.Media.Media3D.Quaternion]$q, [System.Windows.Media.Media3D.Point3D]$p)
-	{
-		return ([Math3D]::Transform([System.Windows.Media.Media3D.Quaternion]$q,[System.Windows.Media.Media3D.Vector3D]$p));
-	}
-
-
 	# Rotates a vector about an axis.
 	static [System.Windows.Media.Media3D.Vector3D]Rotate([System.Windows.Media.Media3D.Vector3D]$v, [System.Windows.Media.Media3D.Vector3D]$rotationAxis, [double]$angleInDegrees)
 	{
@@ -774,16 +746,16 @@ class Math3D {
         [double]$y2 = $bounds.Y + $bounds.SizeY;
         [double]$z2 = $bounds.Z + $bounds.SizeZ;
 
-        [System.Windows.Media.Media3D.Point3D[]]$points = New-Object System.Windows.Media.Media3D.Point3D[] {
-            New-Object System.Windows.Media.Media3D.Point3D($x1, $y1, $z1),
-            new-Object System.Windows.Media.Media3D.Point3D($x1, $y1, $z2),
-            new-Object System.Windows.Media.Media3D.Point3D($x1, $y2, $z1),
-            new-Object System.Windows.Media.Media3D.Point3D($x1, $y2, $z2),
-            new-Object System.Windows.Media.Media3D.Point3D($x2, $y1, $z1),
-            new-Object System.Windows.Media.Media3D.Point3D($x2, $y1, $z2),
-            new-Object System.Windows.Media.Media3D.Point3D($x2, $y2, $z1),
-            new-Object System.Windows.Media.Media3D.Point3D($x2, $y2, $z2)
-        };
+        [System.Windows.Media.Media3D.Point3D[]]$points = (New-Object System.Windows.Media.Media3D.Point3D[]{
+            (New-Object System.Windows.Media.Media3D.Point3D($x1, $y1, $z1)),
+            (new-Object System.Windows.Media.Media3D.Point3D($x1, $y1, $z2)),
+            (new-Object System.Windows.Media.Media3D.Point3D($x1, $y2, $z1)),
+            (new-Object System.Windows.Media.Media3D.Point3D($x1, $y2, $z2)),
+            (new-Object System.Windows.Media.Media3D.Point3D($x2, $y1, $z1)),
+            (new-Object System.Windows.Media.Media3D.Point3D($x2, $y1, $z2)),
+            (new-Object System.Windows.Media.Media3D.Point3D($x2, $y2, $z1)),
+            (new-Object System.Windows.Media.Media3D.Point3D($x2, $y2, $z2))
+        });
 
         $transform.Transform($points);
 

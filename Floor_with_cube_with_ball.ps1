@@ -260,7 +260,7 @@ Class Window{
         return $ts;
     }
 
-    [Void]Storyboard($namespace,$modelgroup,$TranslateTransform3D,$action,$fromX,$fromY,$fromZ,$toX,$toY,$toZ,$duration){
+    [Void]Storyboard($namespace,$MoveTransformString,$modelgroup,$TranslateTransform3D,$action,$fromX,$fromY,$fromZ,$toX,$toY,$toZ,$duration){
         [double]$turnDuration = 0.7
         [double]$Totalduration = 0.0
         [double]$TotalJumpduration = 0.0
@@ -277,11 +277,11 @@ Class Window{
         
         [double]$offset = [Scene]::sceneSize * 0.45
 
-        $storyboard::SetTargetName($doubleAnimationX1,"MoveTransform")
+        $storyboard::SetTargetName($doubleAnimationX1,$MoveTransformString)
         $storyboard::SetTargetProperty($doubleAnimationX1, (New-Object System.Windows.PropertyPath($OffsetXProperty::OffsetXProperty)))
-        $storyboard::SetTargetName($doubleAnimationY1,"MoveTransform")
+        $storyboard::SetTargetName($doubleAnimationY1,$MoveTransformString)
         $storyboard::SetTargetProperty($doubleAnimationY1, (New-Object System.Windows.PropertyPath($OffsetYProperty::OffsetYProperty)))
-        $storyboard::SetTargetName($doubleAnimationZ1,"MoveTransform")
+        $storyboard::SetTargetName($doubleAnimationZ1,$MoveTransformString)
         $storyboard::SetTargetProperty($doubleAnimationZ1, (New-Object System.Windows.PropertyPath($OffsetZProperty::OffsetZProperty)))
         $storyboard.Children.Add($doubleAnimationY1)
         $doubleAnimationY1.BeginTime = ($this.durationTS($totalDuration))
@@ -296,11 +296,11 @@ Class Window{
             $doubleAnimationX2 = New-Object System.Windows.Media.Animation.DoubleAnimation($toX, $fromX, ($this.durationTS($duration)))
             $doubleAnimationY2 = New-Object System.Windows.Media.Animation.DoubleAnimation($toY, $fromY, ($this.durationTS($duration)))
             $doubleAnimationZ2 = New-Object System.Windows.Media.Animation.DoubleAnimation($toZ, $fromZ, ($this.durationTS($duration)))
-            $storyboard::SetTargetName($doubleAnimationX2,"MoveTransform")
+            $storyboard::SetTargetName($doubleAnimationX2,$MoveTransformString)
             $storyboard::SetTargetProperty($doubleAnimationX2, (New-Object System.Windows.PropertyPath($OffsetXProperty::OffsetXProperty)))
-            $storyboard::SetTargetName($doubleAnimationY2,"MoveTransform")
+            $storyboard::SetTargetName($doubleAnimationY2,$MoveTransformString)
             $storyboard::SetTargetProperty($doubleAnimationY2, (New-Object System.Windows.PropertyPath($OffsetYProperty::OffsetYProperty)))
-            $storyboard::SetTargetName($doubleAnimationZ2,"MoveTransform")
+            $storyboard::SetTargetName($doubleAnimationZ2,$MoveTransformString)
             $storyboard::SetTargetProperty($doubleAnimationZ2, (New-Object System.Windows.PropertyPath($OffsetZProperty::OffsetZProperty)))
             $storyboard.Children.Add($doubleAnimationX2)
             $storyboard.Children.Add($doubleAnimationY2)
@@ -349,6 +349,7 @@ $models.Add($floorModel,@{Name = "Floor"; Tag = "ground"})
 $models_check.Add("ground",@{Tag = "ground"; Model = @($floorModel)})
 $MainViewPort.camera = $camera2.camera
 $camera.camera.lookdirection = "-0.999925369660457,0,0.0122170008352693"
+#$camera.camera.position = "$($ball.origin.x),$($ball.origin.y-0.9999),$($ball.origin.z)"
 $camera.camera.position = $ball.origin
 $camera3.camera.lookdirection = "-0.999925369660457,0,0.0122170008352693"
 $camera3.camera.position = $ball.origin
@@ -393,7 +394,8 @@ $mainWindow.window.Add_Loaded({
     $namescope = [System.Windows.Namescope]::SetNameScope($this,[system.windows.NameScope]::new())
     $Global:mythis = $this
     # Set Name Scope and register it with translate transform
-    $mythis.RegisterName("MoveTransform", ($ball.getTranslateTransform()))
+    $mythis.RegisterName("UserBall", ($ball.getTranslateTransform()))
+    $mythis.RegisterName("OpponentBall", ($opponentball.getTranslateTransform()));
 })
 
 
@@ -425,20 +427,37 @@ $mainWindow.window.Add_Loaded({
 }
 
 #Function TimerTick([object]$sender, [EventArgs]$e){}
-
+$timer.Tag = [SphereAction]::Nothing
 $timer.add_Tick({
     # here need to change the way how moving is done, with a too fast timer powershell crashes quite fast
 	if($Camera.MovingUpDirectionIsLocked -eq $true){
         $camera.Move($camera.camera.LookDirection, +$camera.amount)
         $ball.Move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
         $camera3.Move($camera.camera.LookDirection, +$camera.amount)
-        [HitTestResult]$result = [VisualTreeHelper]::HitTest($MainViewPort, ("$($camera.camera.Position.X / 2),$($camera.camera.position.Y)"))
-        [RayMeshGeometry3DHitTestResult]$mesh_result = $result -as [RayMeshGeometry3DHitTestResult]
-        if($mesh_result -ne $null){
-             Write-warning ($models[$mesh_result.ModelHit]).Name
-             if(($models[$mesh_result.ModelHit]).Name -eq "Ball2"){
+        Write-Warning "Ball $($ball.GetBoundsOrigin())"
+        #[HitTestResult]$result = [VisualTreeHelper]::HitTest($MainViewPort, $null, [HitTestResultCallback])
+        #[RayMeshGeometry3DHitTestResult]$mesh_result = $result -as [RayMeshGeometry3DHitTestResult]
+#        $ball.Intersect($ball,$opponentball)
+        [SphereAction] $action = $ball.Intersect($ball,$opponentball)
+        Switch ($action){
+            'Collision' {
                 $opponentball.move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
-             }
+                Write-Warning "opponentball $($opponentball.GetBoundsOrigin())"
+                if(($opponentball.GetBoundsOrigin().X -gt 10) -or ($opponentball.GetBoundsOrigin().X -lt -10) -or ($opponentball.GetBoundsOrigin().Z -gt 10) -or ($opponentball.GetBoundsOrigin().Z -lt -10)){
+                    $mainWindow.Storyboard($mythis,"OpponentBall",($opponentball.GetModelGroup()),($opponentball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
+                    Write-Warning "Opponent ball drop"
+                    $MainViewPort.camera = $camera2.camera
+                    $Global:disablekeys = $true
+                    $timer.Stop()
+                }
+            }
+            Default{}
+        }
+#        if($mesh_result -ne $null){
+#             Write-warning ($models[$mesh_result.ModelHit]).Name
+#             if(($models[$mesh_result.ModelHit]).Name -eq "Ball2"){
+#                $opponentball.move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
+#             }
 #            Write-Warning ($mesh_result)
 #            Write-Warning $mesh_result.DistanceToRayOrigin
 #            Write-Warning $mesh_result.PointHit.ToString()
@@ -446,7 +465,7 @@ $timer.add_Tick({
 #            Write-Warning $mesh.positions[$mesh_result.VertexIndex1].toString()
 #            Write-Warning $mesh.positions[$mesh_result.VertexIndex2].toString()
 #            Write-Warning $mesh.positions[$mesh_result.VertexIndex3].toString()
-        }
+#        }
     }
     elseif($Camera.MovingDownDirectionIsLocked -eq $true){
         $camera.Move($camera.camera.LookDirection, -$camera.amount)
@@ -459,20 +478,12 @@ $timer.add_Tick({
 
     # drop the ball if out of ground plate
     if(($ball.GetBoundsOrigin().X -gt 10) -or ($ball.GetBoundsOrigin().X -lt -10) -or ($ball.GetBoundsOrigin().Z -gt 10) -or ($ball.GetBoundsOrigin().Z -lt -10)){
-        #$mythis.RegisterName("MoveTransform", ($ball.getTranslateTransform()));
-        $mainWindow.Storyboard($mythis,($ball.GetModelGroup()),($ball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
+        $mainWindow.Storyboard($mythis,"UserBall",($ball.GetModelGroup()),($ball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
+        Write-Warning "Ball drop"
         $MainViewPort.camera = $camera2.camera
         $Global:disablekeys = $true
         $timer.Stop()
     }
-    if(($opponentball.GetBoundsOrigin().X -gt 10) -or ($opponentball.GetBoundsOrigin().X -lt -10) -or ($opponentball.GetBoundsOrigin().Z -gt 10) -or ($opponentball.GetBoundsOrigin().Z -lt -10)){
-        #$mythis.RegisterName("MoveTransform", ($ball.getTranslateTransform()));
-        $mainWindow.Storyboard($mythis,($opponentball.GetModelGroup()),($opponentball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
-        $MainViewPort.camera = $camera2.camera
-        $Global:disablekeys = $true
-        $timer.Stop()
-    }
-
 })
 
 
@@ -548,7 +559,7 @@ $window.Add_KeyDown({
                 }
                 'space'{
                     # $namespace,$modelgroup,$TranslateTransform3D,$action,$fromX,$fromY,$fromZ,$toX,$toY,$toZ,$duration
-                    $mainWindow.Storyboard($mythis,($ball.GetModelGroup()),($ball.getTranslateTransform()),"Jump",0,0,0,0,0.5,0,0.5)
+                    $mainWindow.Storyboard($mythis,"UserBall",($ball.GetModelGroup()),($ball.getTranslateTransform()),"Jump",0,0,0,0,0.5,0,0.5)
                     Break;
                 }
             }

@@ -367,5 +367,29 @@ Class Sphere{
         $this.translateTransform = New-Object System.Windows.Media.Media3D.TranslateTransform3D(($direction*$amount))
         $this.addTransform($this.SphereModelGroup, $this.translateTransform)
     }
+
+    [SphereAction]Intersect($sphere,$object){
+        $x = [Math]::Max($object.GetBoundsOrigin().X, [Math]::Min($sphere.GetBoundsOrigin().x, $object.GetBoundsOrigin().X))
+        $y = [Math]::Max($object.GetBoundsOrigin().Y, [Math]::Min($sphere.GetBoundsOrigin().y, $object.GetBoundsOrigin().Y))
+        $z = [Math]::Max($object.GetBoundsOrigin().Z, [Math]::Min($sphere.GetBoundsOrigin().z, $object.GetBoundsOrigin().Z))
+
+        $distance = [Math]::Sqrt(($x - $sphere.GetBoundsOrigin().x) * ($x - $sphere.GetBoundsOrigin().x) +
+                                 ($y - $sphere.GetBoundsOrigin().y) * ($y - $sphere.GetBoundsOrigin().y) +
+                                 ($z - $sphere.GetBoundsOrigin().z) * ($z - $sphere.GetBoundsOrigin().z))
+
+        if($distance -lt $sphere.startradius){
+            Return [SphereAction]::Nothing
+#            Return [SphereAction]::Collision
+        }
+        elseif($object.startradius){
+            if($distance -lt (($sphere.startradius * 2) + ($object.radius * 2))){
+                Return [SphereAction]::Collision
+            } else {
+                Return [SphereAction]::Nothing
+            }
+        } else {
+            Return [SphereAction]::Nothing
+        }
+    }
 }
 

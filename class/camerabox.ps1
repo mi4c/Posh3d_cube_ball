@@ -264,7 +264,7 @@
     }
 
     [System.Windows.Media.Media3D.Vector3D]LeftDirection(){
-        Return [System.Windows.Media.Media3D.Vector3D]::CrossProduct($this.Camera.UpDirection,($this.Camera.LookDirection))        
+        Return [System.Windows.Media.Media3D.Vector3D]::CrossProduct($this.Camera.UpDirection,($this.Camera.LookDirection))
     }
     [System.Windows.Media.Media3D.Vector3D]RightDirection(){
         Return [System.Windows.Media.Media3D.Vector3D]::CrossProduct($this.Camera.LookDirection,($this.Camera.UpDirection))
