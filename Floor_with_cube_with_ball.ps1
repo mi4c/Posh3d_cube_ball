@@ -285,11 +285,12 @@ Class Window{
         $storyboard::SetTargetProperty($doubleAnimationZ1, (New-Object System.Windows.PropertyPath($OffsetZProperty::OffsetZProperty)))
         $storyboard.Children.Add($doubleAnimationY1)
         $doubleAnimationY1.BeginTime = ($this.durationTS($totalDuration))
-        if($action -eq "jump"){
-            $TotalJumpduration += $velocity
-        } else {
-            $Totalduration += $walkDuration
-        }
+        Write-Warning $action
+#        if($action -eq "jump"){
+#            $TotalJumpduration += $velocity
+#        } else {
+#            $Totalduration += $walkDuration
+#        }
         if($action -eq 'Jump'){
             $velocity = 0.5
             $doubleAnimationX2 = New-Object System.Windows.Media.Animation.DoubleAnimation($toX, $fromX, ($this.durationTS($duration)))
@@ -365,7 +366,7 @@ $spherevisual.content = ($ball.GetModelGroup())
 $opponentvisual.content = ($opponentball.GetModelGroup())
 $skyvisual.content = ($sky.GetModelGroup())
 $transformGroup = New-Object System.Windows.Media.Media3D.Transform3DGroup;
-
+#Write-Warning ($ball | convertto-json)
 $mainWindow.window.Add_Loaded({
     $mainWindow.window.content.ShowGridLines = $true
     $mainWindow.window.content.Background = 'Black'
@@ -391,7 +392,8 @@ $mainWindow.window.Add_Loaded({
     # Need to read into memory this to be able to use later
     $namescope = [System.Windows.Namescope]::SetNameScope($this,[system.windows.NameScope]::new())
     $Global:mythis = $this
-
+    # Set Name Scope and register it with translate transform
+    $mythis.RegisterName("MoveTransform", ($ball.getTranslateTransform()))
 })
 
 
@@ -430,6 +432,21 @@ $timer.add_Tick({
         $camera.Move($camera.camera.LookDirection, +$camera.amount)
         $ball.Move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
         $camera3.Move($camera.camera.LookDirection, +$camera.amount)
+        [HitTestResult]$result = [VisualTreeHelper]::HitTest($MainViewPort, ("$($camera.camera.Position.X / 2),$($camera.camera.position.Y)"))
+        [RayMeshGeometry3DHitTestResult]$mesh_result = $result -as [RayMeshGeometry3DHitTestResult]
+        if($mesh_result -ne $null){
+             Write-warning ($models[$mesh_result.ModelHit]).Name
+             if(($models[$mesh_result.ModelHit]).Name -eq "Ball2"){
+                $opponentball.move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
+             }
+#            Write-Warning ($mesh_result)
+#            Write-Warning $mesh_result.DistanceToRayOrigin
+#            Write-Warning $mesh_result.PointHit.ToString()
+#            [MeshGeometry3D]$mesh = $mesh_result.MeshHit
+#            Write-Warning $mesh.positions[$mesh_result.VertexIndex1].toString()
+#            Write-Warning $mesh.positions[$mesh_result.VertexIndex2].toString()
+#            Write-Warning $mesh.positions[$mesh_result.VertexIndex3].toString()
+        }
     }
     elseif($Camera.MovingDownDirectionIsLocked -eq $true){
         $camera.Move($camera.camera.LookDirection, -$camera.amount)
@@ -439,14 +456,23 @@ $timer.add_Tick({
         $ball.Move("$inverseX,$inverseY,$inverseZ", +$camera.amount)
         $camera3.Move($camera.camera.LookDirection, -$camera.amount)
     }
+
     # drop the ball if out of ground plate
     if(($ball.GetBoundsOrigin().X -gt 10) -or ($ball.GetBoundsOrigin().X -lt -10) -or ($ball.GetBoundsOrigin().Z -gt 10) -or ($ball.GetBoundsOrigin().Z -lt -10)){
-        $mythis.RegisterName("MoveTransform", ($ball.getTranslateTransform()));
-        $mainWindow.Storyboard($mythis,($ball.GetModelGroup()),"Drop",($ball.getTranslateTransform()),0,0,0,0,-1000,0,30);
+        #$mythis.RegisterName("MoveTransform", ($ball.getTranslateTransform()));
+        $mainWindow.Storyboard($mythis,($ball.GetModelGroup()),($ball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
         $MainViewPort.camera = $camera2.camera
         $Global:disablekeys = $true
         $timer.Stop()
     }
+    if(($opponentball.GetBoundsOrigin().X -gt 10) -or ($opponentball.GetBoundsOrigin().X -lt -10) -or ($opponentball.GetBoundsOrigin().Z -gt 10) -or ($opponentball.GetBoundsOrigin().Z -lt -10)){
+        #$mythis.RegisterName("MoveTransform", ($ball.getTranslateTransform()));
+        $mainWindow.Storyboard($mythis,($opponentball.GetModelGroup()),($opponentball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
+        $MainViewPort.camera = $camera2.camera
+        $Global:disablekeys = $true
+        $timer.Stop()
+    }
+
 })
 
 
@@ -520,6 +546,11 @@ $window.Add_KeyDown({
                     $MainViewPort.camera = $camera3.camera
                     Break;
                 }
+                'space'{
+                    # $namespace,$modelgroup,$TranslateTransform3D,$action,$fromX,$fromY,$fromZ,$toX,$toY,$toZ,$duration
+                    $mainWindow.Storyboard($mythis,($ball.GetModelGroup()),($ball.getTranslateTransform()),"Jump",0,0,0,0,0.5,0,0.5)
+                    Break;
+                }
             }
         }
         Switch ($eventArgs.key){
@@ -561,12 +592,6 @@ $window.Add_KeyDown({
             'g'{
                 [double]$turnamount = 5
                 $Camera3.ChangePitch(-$turnamount)
-                Break;
-            }
-            'space'{
-                # Set Name Scope and register it with translate transform
-                $mythis.RegisterName("MoveTransform", ($ball.getTranslateTransform()))
-                $mainWindow.Storyboard($mythis,($ball.GetModelGroup()),"Jump",($ball.getTranslateTransform()),0,0,0,0,0.5,0,0.5)
                 Break;
             }
         }
