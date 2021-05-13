@@ -16,6 +16,7 @@
         [System.Windows.Media.Media3D.Point3D]$c = New-Object System.Windows.Media.Media3D.Point3D -ArgumentList(($this.origin.X + ($this.width / 2)),($this.origin.Y),($this.origin.Z + ($this.depth / 2)));
         return $c;
     }
+
     WpfCube([System.Windows.Media.Media3D.Point3D]$P0,[Double]$w,[Double]$h,[Double]$d){
         $this.width = $w
         $this.height = $h

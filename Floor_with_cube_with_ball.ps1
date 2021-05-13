@@ -335,7 +335,7 @@ $camera3 = [CameraBox]::new()
 [Sphere]$sphere = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize / 100), ([scene]::scenesize / 100), ([scene]::scenesize / 100),2.74066683953478,0.6,8.00816300307612)
 [Sphere]$spheresky = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 0, 0")), ([scene]::scenesize), ([scene]::scenesize), ([scene]::scenesize),0,0,0)
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
-[Sphere]$ball = [Sphere]::New($sphere,2.74066683953478,1.0,8.00816300307612,1,20,30,"face.jpg",$false,"User",$models,"User")
+[Sphere]$ball = [Sphere]::New($sphere,2.74066683953478,0.0,8.00816300307612,1,20,30,"face.jpg",$false,"User",$models,"User")
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
 [Sphere]$opponentball = [Sphere]::New($sphere,0,1.0,0,1,20,30,"face.jpg",$false,"Ball2",$models,"Opponent")
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
@@ -396,6 +396,7 @@ $mainWindow.window.Add_Loaded({
     # Set Name Scope and register it with translate transform
     $mythis.RegisterName("UserBall", ($ball.getTranslateTransform()))
     $mythis.RegisterName("OpponentBall", ($opponentball.getTranslateTransform()));
+    #Write-Warning ($floorModel | ConvertTo-Json)
 })
 
 
@@ -434,18 +435,12 @@ $timer.add_Tick({
         $camera.Move($camera.camera.LookDirection, +$camera.amount)
         $ball.Move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
         $camera3.Move($camera.camera.LookDirection, +$camera.amount)
-        Write-Warning "Ball $($ball.GetBoundsOrigin())"
-        #[HitTestResult]$result = [VisualTreeHelper]::HitTest($MainViewPort, $null, [HitTestResultCallback])
-        #[RayMeshGeometry3DHitTestResult]$mesh_result = $result -as [RayMeshGeometry3DHitTestResult]
-#        $ball.Intersect($ball,$opponentball)
         [SphereAction] $action = $ball.Intersect($ball,$opponentball)
         Switch ($action){
             'Collision' {
                 $opponentball.move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
-                Write-Warning "opponentball $($opponentball.GetBoundsOrigin())"
                 if(($opponentball.GetBoundsOrigin().X -gt 10) -or ($opponentball.GetBoundsOrigin().X -lt -10) -or ($opponentball.GetBoundsOrigin().Z -gt 10) -or ($opponentball.GetBoundsOrigin().Z -lt -10)){
                     $mainWindow.Storyboard($mythis,"OpponentBall",($opponentball.GetModelGroup()),($opponentball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
-                    Write-Warning "Opponent ball drop"
                     $MainViewPort.camera = $camera2.camera
                     $Global:disablekeys = $true
                     $timer.Stop()
@@ -453,19 +448,19 @@ $timer.add_Tick({
             }
             Default{}
         }
-#        if($mesh_result -ne $null){
-#             Write-warning ($models[$mesh_result.ModelHit]).Name
-#             if(($models[$mesh_result.ModelHit]).Name -eq "Ball2"){
-#                $opponentball.move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
-#             }
-#            Write-Warning ($mesh_result)
-#            Write-Warning $mesh_result.DistanceToRayOrigin
-#            Write-Warning $mesh_result.PointHit.ToString()
-#            [MeshGeometry3D]$mesh = $mesh_result.MeshHit
-#            Write-Warning $mesh.positions[$mesh_result.VertexIndex1].toString()
-#            Write-Warning $mesh.positions[$mesh_result.VertexIndex2].toString()
-#            Write-Warning $mesh.positions[$mesh_result.VertexIndex3].toString()
-#        }
+        [SphereAction] $action = $ball.Intersect($ball,$floorModel)
+        Switch ($action){
+            'Collision' {
+                $opponentball.move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
+                if(($opponentball.GetBoundsOrigin().X -gt 10) -or ($opponentball.GetBoundsOrigin().X -lt -10) -or ($opponentball.GetBoundsOrigin().Z -gt 10) -or ($opponentball.GetBoundsOrigin().Z -lt -10)){
+                    $mainWindow.Storyboard($mythis,"OpponentBall",($opponentball.GetModelGroup()),($opponentball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
+                    $MainViewPort.camera = $camera2.camera
+                    $Global:disablekeys = $true
+                    $timer.Stop()
+                }
+            }
+            Default{}
+        }
     }
     elseif($Camera.MovingDownDirectionIsLocked -eq $true){
         $camera.Move($camera.camera.LookDirection, -$camera.amount)
@@ -479,7 +474,6 @@ $timer.add_Tick({
     # drop the ball if out of ground plate
     if(($ball.GetBoundsOrigin().X -gt 10) -or ($ball.GetBoundsOrigin().X -lt -10) -or ($ball.GetBoundsOrigin().Z -gt 10) -or ($ball.GetBoundsOrigin().Z -lt -10)){
         $mainWindow.Storyboard($mythis,"UserBall",($ball.GetModelGroup()),($ball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
-        Write-Warning "Ball drop"
         $MainViewPort.camera = $camera2.camera
         $Global:disablekeys = $true
         $timer.Stop()
@@ -603,6 +597,16 @@ $window.Add_KeyDown({
             'g'{
                 [double]$turnamount = 5
                 $Camera3.ChangePitch(-$turnamount)
+                Break;
+            }
+            'y'{
+                [double]$amount = 0.1
+                $ball.Move("0.0,0.1,0.0",+$amount)
+                Break;
+            }
+            'h'{
+                [double]$amount = -0.1
+                $ball.Move("0.0,-0.1,0.0",-$amount)
                 Break;
             }
         }

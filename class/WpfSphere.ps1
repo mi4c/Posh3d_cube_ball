@@ -369,25 +369,34 @@ Class Sphere{
     }
 
     [SphereAction]Intersect($sphere,$object){
-        $x = [Math]::Max($object.GetBoundsOrigin().X, [Math]::Min($sphere.GetBoundsOrigin().x, $object.GetBoundsOrigin().X))
-        $y = [Math]::Max($object.GetBoundsOrigin().Y, [Math]::Min($sphere.GetBoundsOrigin().y, $object.GetBoundsOrigin().Y))
-        $z = [Math]::Max($object.GetBoundsOrigin().Z, [Math]::Min($sphere.GetBoundsOrigin().z, $object.GetBoundsOrigin().Z))
+        if($object.startradius){
+            $x = [Math]::Max($object.GetBoundsOrigin().X, [Math]::Min($sphere.GetBoundsOrigin().x, $object.GetBoundsOrigin().X))
+            $y = [Math]::Max($object.GetBoundsOrigin().Y, [Math]::Min($sphere.GetBoundsOrigin().y, $object.GetBoundsOrigin().Y))
+            $z = [Math]::Max($object.GetBoundsOrigin().Z, [Math]::Min($sphere.GetBoundsOrigin().z, $object.GetBoundsOrigin().Z))
+        } else {
+            $x = [Math]::Max($object.Bounds.X, [Math]::Min($sphere.GetBoundsOrigin().x, $object.Bounds.X))
+            $y = [Math]::Max($object.Bounds.Y, [Math]::Min($sphere.GetBoundsOrigin().y, $object.Bounds.Y))
+            $z = [Math]::Max($object.Bounds.Z, [Math]::Min($sphere.GetBoundsOrigin().z, $object.Bounds.Z))
+        }
 
         $distance = [Math]::Sqrt(($x - $sphere.GetBoundsOrigin().x) * ($x - $sphere.GetBoundsOrigin().x) +
-                                 ($y - $sphere.GetBoundsOrigin().y) * ($y - $sphere.GetBoundsOrigin().y) +
-                                 ($z - $sphere.GetBoundsOrigin().z) * ($z - $sphere.GetBoundsOrigin().z))
+                                    ($y - $sphere.GetBoundsOrigin().y) * ($y - $sphere.GetBoundsOrigin().y) +
+                                    ($z - $sphere.GetBoundsOrigin().z) * ($z - $sphere.GetBoundsOrigin().z))
 
         if($distance -lt $sphere.startradius){
+            Write-Warning "Osu"
             Return [SphereAction]::Nothing
 #            Return [SphereAction]::Collision
         }
         elseif($object.startradius){
-            if($distance -lt (($sphere.startradius * 2) + ($object.radius * 2))){
+            if($distance -lt (($sphere.startradius) + ($object.startradius))){
                 Return [SphereAction]::Collision
             } else {
+                Write-Warning "ei käsitelty spherejä"
                 Return [SphereAction]::Nothing
             }
         } else {
+            Write-Warning "ei havaittu spherejä"
             Return [SphereAction]::Nothing
         }
     }
