@@ -15,6 +15,8 @@ I know I can run in runspaces multiple things, I have a version of this already 
 Currently issue is that I try to give user too much control with timer ticks and key presses that are too fast and that triggers the powershell safety process.
 Powershell idea is: better not to give a script ability to do it's own than give something that is not anymore accurate...
 
+Try to drop the second ball out of the plate, or run with your controlled ball out from the plate.
+
 Move ball with keys up,down,left,right
 
 Look ball up and down with keys t,g in camera3
