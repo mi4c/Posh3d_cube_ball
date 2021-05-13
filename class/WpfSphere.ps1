@@ -28,6 +28,7 @@ Class Sphere{
     [System.Windows.Media.Media3D.TranslateTransform3D]$translateTransform
     [System.Windows.Media.Media3D.Model3DGroup]$SphereModelGroup
     [String]$Name
+    [String]$Tag
 
     
 
@@ -40,7 +41,7 @@ Class Sphere{
         $this.startY = $startY
         $this.startZ = $startZ
     }
-    Sphere([Sphere]$sphere,[Double]$startX,[Double]$startY,[Double]$startZ,[Double]$radius,[Int]$num_phi, [Int]$num_theta, $imagefile,[Bool]$transparent,[String]$Name,$models){
+    Sphere([Sphere]$sphere,[Double]$startX,[Double]$startY,[Double]$startZ,[Double]$radius,[Int]$num_phi, [Int]$num_theta, $imagefile,[Bool]$transparent,[String]$Name,$models,$Tag){
         $this.width = $sphere.width
         $this.height = $sphere.height
         $this.depth = $sphere.depth
@@ -52,7 +53,8 @@ Class Sphere{
         $this.startphi = $num_phi
         $this.starttheta = $num_theta
         $this.name = $Name
-        $this.Definemodel($imagefile,$transparent,$Name,$models)
+        $this.tag = $Tag
+        $this.Definemodel($imagefile,$transparent,$Name,$models,$Tag)
         $this.origin = $sphere.GetBoundsorigin()
         $this.addMotionTransforms()
     }
@@ -166,7 +168,7 @@ Class Sphere{
     # Make a sphere.
 #    static MakeSphere([System.Windows.Media.Media3D.MeshGeometry3D]$sphere_mesh, [System.Windows.Media.Media3D.Material]$sphere_material,
     Static MakeSphere([System.Windows.Media.Media3D.Model3DGroup]$model_group, [System.Windows.Media.Media3D.MeshGeometry3D]$sphere_mesh, [System.Windows.Media.Media3D.Material]$sphere_material,
-        [Double]$radius, [Double]$cx, [Double]$cy, [Double]$cz, [Int]$num_phi, [Int]$num_theta, [System.Windows.Media.Media3D.Material]$globe_BackMaterial, [Bool]$transparent, [String]$Name,$models)
+        [Double]$radius, [Double]$cx, [Double]$cy, [Double]$cz, [Int]$num_phi, [Int]$num_theta, [System.Windows.Media.Media3D.Material]$globe_BackMaterial, [Bool]$transparent, [String]$Name,$models,[String]$Tag)
     {
         # Make the mesh if we must.
         if ($sphere_mesh -eq $null)
@@ -176,7 +178,7 @@ Class Sphere{
             if($transparent){
                 $new_model.BackMaterial = $globe_BackMaterial
             }
-            $models.Add($new_model,$Name)
+            $models.Add($new_model,@{Name = $Name; Tag = $Tag})
             $model_group.Children.Add($new_model)
         }
         [Double]$dphi = ([Math]::PI / $num_phi);
@@ -258,7 +260,7 @@ Class Sphere{
     }
 
     # Add the model to the Model3DGroup.
-    DefineModel($imagefile,[Bool]$transparent,[String]$Name,$models)
+    DefineModel($imagefile,[Bool]$transparent,[String]$Name,$models,[String]$Tag)
     {
         # Globe. Place it in a new model so we can transform it.
         [System.Windows.Media.Media3D.Model3DGroup]$globe_model = New-Object System.Windows.Media.Media3D.Model3DGroup
@@ -275,7 +277,7 @@ Class Sphere{
         $globe_BackMaterial = $globe_material
         
         [System.Windows.Media.Media3D.MeshGeometry3D]$globe_mesh = $null;
-        [Sphere]::MakeSphere($globe_model, ($globe_mesh), $globe_material, $this.startradius, $($this.startX),$($this.startY),$($this.startZ), $this.startphi, $this.starttheta,$globe_BackMaterial,$transparent,[String]$Name,$models);
+        [Sphere]::MakeSphere($globe_model, ($globe_mesh), $globe_material, $this.startradius, $($this.startX),$($this.startY),$($this.startZ), $this.startphi, $this.starttheta,$globe_BackMaterial,$transparent,[String]$Name,$models,[String]$Tag);
     }
 
     [Int]durationM([double]$seconds)
