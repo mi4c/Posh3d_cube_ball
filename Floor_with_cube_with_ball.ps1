@@ -286,11 +286,6 @@ Class Window{
         $storyboard.Children.Add($doubleAnimationY1)
         $doubleAnimationY1.BeginTime = ($this.durationTS($totalDuration))
         Write-Warning $action
-#        if($action -eq "jump"){
-#            $TotalJumpduration += $velocity
-#        } else {
-#            $Totalduration += $walkDuration
-#        }
         if($action -eq 'Jump'){
             $velocity = 0.5
             $doubleAnimationX2 = New-Object System.Windows.Media.Animation.DoubleAnimation($toX, $fromX, ($this.durationTS($duration)))
@@ -335,7 +330,9 @@ $camera3 = [CameraBox]::new()
 [Sphere]$sphere = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize / 100), ([scene]::scenesize / 100), ([scene]::scenesize / 100),2.74066683953478,0.6,8.00816300307612)
 [Sphere]$spheresky = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 0, 0")), ([scene]::scenesize), ([scene]::scenesize), ([scene]::scenesize),0,0,0)
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
-[Sphere]$ball = [Sphere]::New($sphere,2.74066683953478,0.0,8.00816300307612,1,20,30,"face.jpg",$false,"User",$models,"User")
+[Sphere]$ball = [Sphere]::New($sphere,2.74066683953478,1.0,8.00816300307612,1,20,30,"face.jpg",$false,"User",$models,"User")
+#[Sphere]$ball = [Sphere]::New($sphere,-3.5527136788005E-15,-0.333333333333333,-3.5527136788005E-15,1,20,30,"face.jpg",$false,"User",$models,"User")
+
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
 [Sphere]$opponentball = [Sphere]::New($sphere,0,1.0,0,1,20,30,"face.jpg",$false,"Ball2",$models,"Opponent")
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
@@ -384,7 +381,7 @@ $mainWindow.window.Add_Loaded({
     $MainViewPort.Children.Add($opponentvisual)
     $MainViewPort.Children.Add($skyvisual)
     $cubeModelOrigin = getOrigin -model $cubeModel
-    turnModel -center $cubeModelOrigin -model $cubeModel -beginAngle 0 -endAngle 360 -seconds 3 -forever $true
+    #turnModel -center $cubeModelOrigin -model $cubeModel -beginAngle 0 -endAngle 360 -seconds 3 -forever $true
     turnModel -center $sky.origin -modelgroup $sky.GetModelGroup() -beginAngle 0 -endAngle 360 -seconds 960 -forever $true
     [double]$camera.amount = 0.00
     [double]$Camera.amount *= $Camera.Scale
@@ -448,16 +445,17 @@ $timer.add_Tick({
             }
             Default{}
         }
-        [SphereAction] $action = $ball.Intersect($ball,$floorModel)
+        [SphereAction] $action = $ball.Intersect($ball,$cubeModel)
+        #Write-Warning ($cubeModel | convertto-json)
         Switch ($action){
             'Collision' {
-                $opponentball.move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
-                if(($opponentball.GetBoundsOrigin().X -gt 10) -or ($opponentball.GetBoundsOrigin().X -lt -10) -or ($opponentball.GetBoundsOrigin().Z -gt 10) -or ($opponentball.GetBoundsOrigin().Z -lt -10)){
-                    $mainWindow.Storyboard($mythis,"OpponentBall",($opponentball.GetModelGroup()),($opponentball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
-                    $MainViewPort.camera = $camera2.camera
-                    $Global:disablekeys = $true
-                    $timer.Stop()
-                }
+                Write-Warning "Hit with $($Models[$cubeModel].Name)"
+                $inverseX = [double]$camera.camera.LookDirection.X * -1
+                $inverseY = [double]$camera.camera.LookDirection.Y * -1
+                $inverseZ = [double]$camera.camera.LookDirection.Z * -1
+                $camera.Move($camera.camera.LookDirection, -$camera.amount)
+                $ball.Move("$inverseX,$inverseY,$inverseZ", +$camera.amount)
+                $camera3.Move($camera.camera.LookDirection, -$camera.amount)
             }
             Default{}
         }
@@ -469,6 +467,33 @@ $timer.add_Tick({
         $inverseZ = [double]$camera.camera.LookDirection.Z * -1
         $ball.Move("$inverseX,$inverseY,$inverseZ", +$camera.amount)
         $camera3.Move($camera.camera.LookDirection, -$camera.amount)
+        [SphereAction] $action = $ball.Intersect($ball,$opponentball)
+        Switch ($action){
+            'Collision' {
+                $inverseX = [double]$camera.camera.LookDirection.X * -1
+                $inverseY = [double]$camera.camera.LookDirection.Y * -1
+                $inverseZ = [double]$camera.camera.LookDirection.Z * -1
+                $opponentball.move("$inverseX,$inverseY,$inverseZ", +$camera.amount)
+                if(($opponentball.GetBoundsOrigin().X -gt 10) -or ($opponentball.GetBoundsOrigin().X -lt -10) -or ($opponentball.GetBoundsOrigin().Z -gt 10) -or ($opponentball.GetBoundsOrigin().Z -lt -10)){
+                    $mainWindow.Storyboard($mythis,"OpponentBall",($opponentball.GetModelGroup()),($opponentball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
+                    $MainViewPort.camera = $camera2.camera
+                    $Global:disablekeys = $true
+                    $timer.Stop()
+                }
+            }
+            Default{}
+        }
+        [SphereAction] $action = $ball.Intersect($ball,$cubeModel)
+        #Write-Warning ($cubeModel | convertto-json)
+        Switch ($action){
+            'Collision' {
+                Write-Warning "Hit with $($Models[$cubeModel].Name)"
+                $camera.Move($camera.camera.LookDirection, +$camera.amount)
+                $ball.Move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
+                $camera3.Move($camera.camera.LookDirection, +$camera.amount)
+            }
+            Default{}
+        }
     }
 
     # drop the ball if out of ground plate
