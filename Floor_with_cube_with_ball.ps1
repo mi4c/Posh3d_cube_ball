@@ -381,7 +381,7 @@ $mainWindow.window.Add_Loaded({
     $MainViewPort.Children.Add($opponentvisual)
     $MainViewPort.Children.Add($skyvisual)
     $cubeModelOrigin = getOrigin -model $cubeModel
-    #turnModel -center $cubeModelOrigin -model $cubeModel -beginAngle 0 -endAngle 360 -seconds 3 -forever $true
+    turnModel -center $cubeModelOrigin -model $cubeModel -beginAngle 0 -endAngle 360 -seconds 3 -forever $true
     turnModel -center $sky.origin -modelgroup $sky.GetModelGroup() -beginAngle 0 -endAngle 360 -seconds 960 -forever $true
     [double]$camera.amount = 0.00
     [double]$Camera.amount *= $Camera.Scale
