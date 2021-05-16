@@ -1,4 +1,6 @@
-﻿class MathUtils{
+﻿
+
+class MathUtils{
 	[double]$PI = 3.1415926535897932384626433;
 	[double]$PIx2 = $PI * 2.0;
 	[double]$PIo2 = $PI * 0.5;
@@ -121,12 +123,16 @@ class LinearTransform{
 
 
 class Math3D {
-    [System.Windows.Media.Media3D.Point3D]$pt
+    [System.Windows.Media.Media3D.Point3D]$pt = (New-Object System.Windows.Media.Media3D.Point3D)
     [System.Windows.Media.Media3D.Matrix3D]$ZeroMatrix = (new-object System.Windows.Media.Media3D.Matrix3D(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
 	[System.Windows.Media.Media3D.Point3D]$Origin = (new-object System.Windows.Media.Media3D.Point3D(0, 0, 0));
-	static [System.Windows.Media.Media3D.Vector3D]$UnitX = (New-Object System.Windows.Media.Media3D.Vector3D(1, 0, 0));
-    static [System.Windows.Media.Media3D.Vector3D]$UnitY = (New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0));
-    static [System.Windows.Media.Media3D.Vector3D]$UnitZ = (New-Object System.Windows.Media.Media3D.Vector3D(0, 0, 1));
+	[System.Windows.Media.Media3D.Vector3D]$UnitX = (New-Object System.Windows.Media.Media3D.Vector3D(1, 0, 0));
+    [System.Windows.Media.Media3D.Vector3D]$UnitY = (New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0));
+    Static [System.Windows.Media.Media3D.Vector3D]$UnitZ = (New-Object System.Windows.Media.Media3D.Vector3D(0, 0, 1));
+    [System.Windows.Media.Media3D.RayMeshGeometry3DHitTestResult]$hitTestResult
+
+    Math3D(){}
+
 
 	static [Double]Distance([System.Windows.Media.Media3D.Point3D]$pt)
 	{        
@@ -467,7 +473,7 @@ class Math3D {
     }
 
 	# Gets the object space to world space (or a parent object space) transformation for the given 3D visual.
-	static [System.Windows.Media.Media3D.Matrix3D]GetTransformationMatrix([System.Windows.DependencyObject]$visual, [System.Windows.DependencyObject]$relativeTo = $null)
+	static [System.Windows.Media.Media3D.Matrix3D]GetTransformationMatrix([System.Windows.DependencyObject]$visual)
 	{
 		[System.Windows.Media.Media3D.Matrix3D]$matrix = [System.Windows.Media.Media3D.Matrix3D]::Identity;
 
@@ -478,9 +484,6 @@ class Math3D {
 				$matrix.Append($transform.Value);
             }
 			$visual = [System.Windows.Media.VisualTreeHelper]::GetParent($visual);
-			if ($visual -eq $relativeTo){
-				break;
-            }
 		}
 
 		return $matrix;
@@ -592,13 +595,13 @@ class Math3D {
 	# <param name="mv3D">The ModelVisual3D.</param>
 	# <param name="ptNear">The 3D point which belongs to the near clipping plane.</param>
 	# <param name="ptFar">The 3D point which belongs to the far clipping plane.</param>
-	[bool]GetRay([System.Windows.Point]$ptPlot, [System.Windows.Media.Media3D.ModelVisual3D]$mv3D, [System.Windows.Media.Media3D.Point3D]$ptNear, [System.Windows.Media.Media3D.Point3D]$ptFar)
+	static [bool]GetRay([System.Windows.Point]$ptPlot, [System.Windows.Media.Media3D.ModelVisual3D]$mv3D, [System.Windows.Media.Media3D.Point3D]$ptNear, [System.Windows.Media.Media3D.Point3D]$ptFar)
 	{
-		[bool]$this.success;
-		[System.Windows.Media.Media3D.Viewport3DVisual]$this.vp;
-		[System.Windows.Media.Media3D.Matrix3D]$modelToViewport = [Math3D]::TryTransformTo2DAncestor($mv3D, $this.vp, $this.success);
+		$success = (New-Object bool);
+		[System.Windows.Media.Media3D.Viewport3DVisual]$vp = (New-Object System.Windows.Media.Media3D.Viewport3DVisual)
+		[System.Windows.Media.Media3D.Matrix3D]$modelToViewport = [Math3D]::TryTransformTo2DAncestor($mv3D, $vp, $success);
 
-		if ((-not ($this.success)) -or (-not ($modelToViewport.HasInverse)))
+		if ((-not ($success)) -or (-not ($modelToViewport.HasInverse)))
 		{
 			$ptNear = $ptFar = New-Object System.Windows.Media.Media3D.Point3D;
 			return $false;
@@ -615,44 +618,41 @@ class Math3D {
 
 		return $true;
 	}
-<#	# <summary>
+	# <summary>
 	# Performs a 3D hit test. Point pt is a 2D point in viewport space. 
 	# The object needs to be a Viewport3D or a ModelVisual3D.
 	# </summary>
-	HitTest([object]$obj, [System.Windows.Point]$pt){
-		$hitTestResult = $null;
-
-		[System.Windows.Controls.Viewport3D]$viewport = $obj -as [System.Windows.Controls.Viewport3D];
+	[System.Windows.Media.Media3D.RayMeshGeometry3DHitTestResult]HitTest([object]$obj, [System.Windows.Point]$pt){
+        [System.Windows.Controls.Viewport3D]$viewport = $obj -as [System.Windows.Controls.Viewport3D];
 		if ($viewport -ne $null){
-			$hitTestResult = ([System.Windows.Media.VisualTreeHelper]::HitTest($viewport, $null, $this.HitTestResultCallback, ( New-Object $this.PointHitTestParameters($pt))));
+#			$this.hitTestResult = ([System.Windows.Media.VisualTreeHelper]::HitTest($viewport, $null, ($this.HitTestResultCallback),(New-Object System.Windows.Media.PointHitTestParameters($pt))));
+			$this.hitTestResult = ([System.Windows.Media.VisualTreeHelper]::HitTest($viewport, $pt));
 		} else {
 			[System.Windows.Media.Media3D.ModelVisual3D]$model = $obj -as [System.Windows.Media.Media3D.ModelVisual3D];
 			if ($model -ne $null){
-				[System.Windows.Media.Media3D.Point3D]$this.ptNear, $this.ptFar;
-				if ([Math3D]::GetRay($pt, $model, $this.ptNear, $this.ptFar)){
-					$paras = New-Object $this.RayHitTestParameters($this.ptNear, $this.ptFar - $this.ptNear);
-					$hitTestResult = [System.Windows.Media.VisualTreeHelper]::HitTest($model, $null, $this.HitTestResultCallback, $paras);
+				[System.Windows.Media.Media3D.Point3D]$ptNear = (New-Object System.Windows.Media.Media3D.Point3D)
+                [System.Windows.Media.Media3D.Point3D]$ptFar = (New-Object System.Windows.Media.Media3D.Point3D)
+				if ([Math3D]::GetRay($pt, $model, $ptNear, $ptFar)){
+					$paras = (New-Object System.Windows.Media.Media3D.RayHitTestParameters($ptNear, $ptFar - $ptNear));
+					$this.hitTestResult = [System.Windows.Media.VisualTreeHelper]::HitTest($model, $null, [Math3D]::HitTestResultCallback, $paras);
 				}
 			}
 		}
-		return $hitTestResult;
+		return $this.hitTestResult
 	}
-	static RayMeshGeometry3DHitTestResult hitTestResult;
-
-	static HitTestResultBehavior HitTestResultCallback(HitTestResult result)
+    
+	Static [System.Windows.Media.HitTestResultBehavior]HitTestResultCallback([System.Windows.Media.HitTestResult]$result)
 	{
-		RayMeshGeometry3DHitTestResult htr = result as RayMeshGeometry3DHitTestResult;
-		if (htr != null)
-		{
-			if (hitTestResult == null)
-				hitTestResult = htr;
-
-			else if (htr.DistanceToRayOrigin < hitTestResult.DistanceToRayOrigin)
-				hitTestResult = htr;
-		}
-		return HitTestResultBehavior.Continue;
+		[System.Windows.Media.Media3D.RayMeshGeometry3DHitTestResult]$htr = $result -as [System.Windows.Media.Media3D.RayMeshGeometry3DHitTestResult];
+        Write-Warning $htr
+		if ($htr -ne $null){
+        	return [System.Windows.Media.HitTestResultBehavior]::Continue;
+		} else {
+		    return [System.Windows.Media.HitTestResultBehavior]::Stop;
+        }
+        #return $this.hitTestResult
 	}
-#>
+
 	# <summary>
 	# Calculates the intersections between a ray and a mesh.
 	# <para>
@@ -1116,4 +1116,3 @@ class Matrix3DTransform
 		return $m;
 	}
 }
-

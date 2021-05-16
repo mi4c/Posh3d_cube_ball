@@ -331,9 +331,6 @@
 	}
 
 	[void]Rotate([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle, [System.Windows.Media.Media3D.Point3D]$center){
-        if (-not $center.IsValid()){
-			$center = [Math3D]::Origin;
-        }
 
 		$this.camera.Position = $this.camera.Position.Subtract($center);
 		$this.camera.Rotate($axis, $angle);

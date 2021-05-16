@@ -59,7 +59,6 @@ using Namespace System.Windows.Media.Imaging;
 using Namespace System.Windows.Shapes;
 [System.Reflection.Assembly]::LoadWithPartialName("System.Drawing") | Out-Null
 
-
 <#
     .SYNOPSIS
     Move ball
@@ -261,11 +260,7 @@ Class Window{
     }
 
     [Void]Storyboard($namespace,$MoveTransformString,$modelgroup,$TranslateTransform3D,$action,$fromX,$fromY,$fromZ,$toX,$toY,$toZ,$duration){
-        [double]$turnDuration = 0.7
         [double]$Totalduration = 0.0
-        [double]$TotalJumpduration = 0.0
-        [double]$walkDuration = 3.4
-        [Double]$velocity = 0.5
 
         $storyboard = New-Object System.Windows.Media.Animation.StoryBoard
         $doubleAnimationX1 = New-Object System.Windows.Media.Animation.DoubleAnimation($fromX, $toX, ($this.durationTS($duration)))
@@ -287,7 +282,6 @@ Class Window{
         $doubleAnimationY1.BeginTime = ($this.durationTS($totalDuration))
         Write-Warning $action
         if($action -eq 'Jump'){
-            $velocity = 0.5
             $doubleAnimationX2 = New-Object System.Windows.Media.Animation.DoubleAnimation($toX, $fromX, ($this.durationTS($duration)))
             $doubleAnimationY2 = New-Object System.Windows.Media.Animation.DoubleAnimation($toY, $fromY, ($this.durationTS($duration)))
             $doubleAnimationZ2 = New-Object System.Windows.Media.Animation.DoubleAnimation($toZ, $fromZ, ($this.durationTS($duration)))
@@ -300,16 +294,30 @@ Class Window{
             $storyboard.Children.Add($doubleAnimationX2)
             $storyboard.Children.Add($doubleAnimationY2)
             $storyboard.Children.Add($doubleAnimationZ2)
-            $doubleAnimationX2.BeginTime = ($this.durationTS($velocity))
-            $doubleAnimationY2.BeginTime = ($this.durationTS($velocity))
-            $doubleAnimationZ2.BeginTime = ($this.durationTS($velocity))
-            $TotalJumpduration += $velocity
+            $doubleAnimationX2.BeginTime = ($this.durationTS($duration))
+            $doubleAnimationY2.BeginTime = ($this.durationTS($duration))
+            $doubleAnimationZ2.BeginTime = ($this.durationTS($duration))
         }
 
         $Storyboard.RepeatBehavior = "1x"
         $storyboard.Begin($namespace)
+        $Global:JumpFinished = $true
     }
 }
+
+Add-Type -TypeDefinition @"
+using System;
+using System.Threading;
+using System.Runtime.InteropServices;
+namespace W32API
+{
+    public static class Mouse
+    {
+        [DllImport("User32.dll")]
+        public static extern bool SetCursorPos(int X,int Y);
+    }
+}
+"@
 
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
@@ -330,13 +338,15 @@ $camera3 = [CameraBox]::new()
 [Sphere]$sphere = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize / 100), ([scene]::scenesize / 100), ([scene]::scenesize / 100),2.74066683953478,0.6,8.00816300307612)
 [Sphere]$spheresky = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 0, 0")), ([scene]::scenesize), ([scene]::scenesize), ([scene]::scenesize),0,0,0)
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
-[Sphere]$ball = [Sphere]::New($sphere,2.74066683953478,1.0,8.00816300307612,1,20,30,"face.jpg",$false,"User",$models,"User")
+[System.Windows.Media.Media3D.Point3D]$userstartlocation = "9.18277104297157,1,-8.98384814917402"
+[Sphere]$ball = [Sphere]::New($sphere,$userstartlocation,1,20,30,"face.jpg",$false,"User",$models,"User")
 #[Sphere]$ball = [Sphere]::New($sphere,-3.5527136788005E-15,-0.333333333333333,-3.5527136788005E-15,1,20,30,"face.jpg",$false,"User",$models,"User")
-
+[System.Windows.Media.Media3D.Point3D]$opponentstartlocation = "-9.18524945901486,1,9.39554518710787"
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
-[Sphere]$opponentball = [Sphere]::New($sphere,0,1.0,0,1,20,30,"face.jpg",$false,"Ball2",$models,"Opponent")
+[Sphere]$opponentball = [Sphere]::New($sphere,$opponentstartlocation,1,20,30,"face.jpg",$false,"Ball2",$models,"Opponent")
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
-[Sphere]$sky = [Sphere]::New($spheresky,0,0.0,0,50,20,30,"Sky.jpg",$true,"Sky",$models,"Atmosphere")
+[System.Windows.Media.Media3D.Point3D]$Skystartlocation = "0,0,0"
+[Sphere]$sky = [Sphere]::New($spheresky,$Skystartlocation,50,20,30,"Sky.jpg",$true,"Sky",$models,"Atmosphere")
 # Create window class
 $mainWindow = [Window]::new([System.Xml.XmlNodeReader]$reader,[System.Windows.Window]$window)
 $MainViewPort = $mainWindow.window.FindName('MainViewport')
@@ -345,6 +355,7 @@ $models_check.Add("obstacle",@{Tag = "CubeModel"; Model = $cubeModel})
 $models.Add($floorModel,@{Name = "Floor"; Tag = "ground"})
 $models_check.Add("ground",@{Tag = "ground"; Model = @($floorModel)})
 $MainViewPort.camera = $camera2.camera
+$MainViewPort.tag = "Camera2"
 $camera.camera.lookdirection = "-0.999925369660457,0,0.0122170008352693"
 #$camera.camera.position = "$($ball.origin.x),$($ball.origin.y-0.9999),$($ball.origin.z)"
 $camera.camera.position = $ball.origin
@@ -365,6 +376,32 @@ $opponentvisual.content = ($opponentball.GetModelGroup())
 $skyvisual.content = ($sky.GetModelGroup())
 $transformGroup = New-Object System.Windows.Media.Media3D.Transform3DGroup;
 #Write-Warning ($ball | convertto-json)
+
+#Function GetTouchPoint($htr)
+Function GetTouchPoint([System.Windows.Point]$pt2D)
+{
+    Write-Warning $pt2D
+	$math3d = [Math3D]::New()
+    $htr = $math3d.HitTest($MainViewPort,$pt2D);
+	if ($htr -eq $null){
+		return [Math3D]::Origin;
+    } else {
+	    [Point3D]$pt3D = $htr.PointHit; # in model space
+        Write-Warning $htr.visualHit
+	    [Matrix3D]$m = [Math3D]::GetTransformationMatrix($htr.VisualHit);
+	    $pt3D = $m.Transform($pt3D); # in global space
+	    return $pt3D;
+    }
+}
+
+Function HitTestResultCallback([System.Windows.Media.HitTestResult]$result){
+    [System.Windows.Media.Media3D.RayMeshGeometry3DHitTestResult]$htr = $result -as [System.Windows.Media.Media3D.RayMeshGeometry3DHitTestResult];
+	if ($htr -ne $null){
+		$hitTestResult = $htr;
+	}
+	return [System.Windows.Media.HitTestResultBehavior]::Continue;
+}
+
 $mainWindow.window.Add_Loaded({
     $mainWindow.window.content.ShowGridLines = $true
     $mainWindow.window.content.Background = 'Black'
@@ -386,7 +423,7 @@ $mainWindow.window.Add_Loaded({
     [double]$camera.amount = 0.00
     [double]$Camera.amount *= $Camera.Scale
     $timer.Start()
-    [double]$camera.amount = ([double]$camera.amount + 0.08)
+    #[double]$camera.amount = ([double]$camera.amount + 0.08)
     # Need to read into memory this to be able to use later
     $namescope = [System.Windows.Namescope]::SetNameScope($this,[system.windows.NameScope]::new())
     $Global:mythis = $this
@@ -398,23 +435,89 @@ $mainWindow.window.Add_Loaded({
 
 
 #    $MainviewPort.Add_MouseDown({
+    $MainViewPort.Add_MouseMove({
+        Param ([Object] $sender, [MouseEventArgs]$eventArgs)
+        if($MainViewPort.tag -eq "camera3"){
+            #Write-Warning ($mainWindow | ConvertTo-Json)
+            if($mainWindow.window.WindowState -eq 2){
+                $WindowSizeWidth = $mainWindow.window.ActualWidth
+                $WindowSizeHeight = $mainWindow.window.ActualHeight
+                $CursorPositionX = $WindowSizeWidth/2
+                $CursorPositionY = $WindowSizeHeight/2
+            } else {
+                $WindowPositionX = $mainWindow.window.Left
+                $WindowPositionY = $mainWindow.window.Top
+                $WindowSizeWidth = $mainWindow.window.ActualWidth
+                $WindowSizeHeight = $mainWindow.window.ActualHeight
+                $CursorPositionX = ($WindowPositionX + ($WindowSizeWidth/2))
+                $CursorPositionY = ($WindowPositionY + ($WindowSizeHeight/2))
+            }
+            $null = [W32API.Mouse]::SetCursorPos($CursorPositionX,$CursorPositionY)
+			[double]$factor = 0.005;
+            #Write-Warning $eventArgs.GetPosition($this).X
+            #Write-Warning ($mainWindow.content.ActualWidth | ConvertTo-Json)
+            
+#            if(($mainWindow.window.content.ActualWidth / 2) -ge $eventArgs.GetPosition($this).X){
+            if((($mainWindow.window.content.ActualWidth / 2) -gt $eventArgs.GetPosition($this).X)){
+                $Global:NewCursorpositionX = $NewCursorpositionX - $CursorPositionX
+                #$Global:NewCursorpositionY = $NewCursorpositionY - $CursorPositionY
+                Write-Warning "Osuiko isompi"
+                Write-Warning $eventArgs.GetPosition($this).X
+                Write-Warning ($mainWindow.window.content.ActualWidth / 2)
+			    [double]$angleX = ((($NewCursorpositionX) + ($eventArgs.GetPosition($this).X)) * $factor);
+			    #[double]$angleY = ((($NewCursorpositionY) + ($eventArgs.GetPosition($this).Y)) * $factor);
+                $rotationX = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D("0,$($NewCursorPositionX),0", +$angleX)
+                #$rotationY = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D("0,0,$($NewCursorPositionY)", +$angleY)
+                $rotateTransformX = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotationX), ($camera3.Camera.Position));
+                #$rotateTransformY = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotationY), ($camera3.Camera.Position));
+                #$camera3.camera.transform = $rotateTransformY
+                $camera3.camera.transform = $rotateTransformX
+            } 
+            elseif((($mainWindow.window.content.ActualWidth / 2) -lt $eventArgs.GetPosition($this).X)){
+                $Global:NewCursorpositionX = $NewCursorpositionX + $CursorPositionX
+                #$Global:NewCursorpositionY = $NewCursorpositionY +$CursorPositionY
+                Write-Warning "Entä osuiko pienempi"
+                Write-Warning $eventArgs.GetPosition($this).X
+                Write-Warning ($mainWindow.window.content.ActualWidth / 2)
+			    [double]$angleX = ((($NewCursorpositionX) + ($eventArgs.GetPosition($this).X)) * $factor);
+			    #[double]$angleY = (($NewCursorpositionY + $eventArgs.GetPosition($this).Y) * $factor);
+                $rotationX = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D("0,$($NewCursorPositionX),0", +$angleX)
+                #$rotationY = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D("0,0,$($NewCursorPositionY)", $angleY)
+                $rotateTransformX = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotationX), ($camera3.Camera.Position));
+                #$rotateTransformY = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotationY), ($camera3.Camera.Position));
+                #$camera3.camera.transform = $rotateTransformY
+                $camera3.camera.transform = $rotateTransformX
+            }
+            #Write-Warning (GetTouchPoint ($eventArgs.GetPosition($this)) $MainViewPort)
+            #[HitTestResult]$result = [VisualTreeHelper]::HitTest($MainViewPort, "$($CursorPositionX),$($CursorPositionY)")
+            #$htr = [System.Windows.Media.VisualTreeHelper]::HitTest($viewport, $null, (HitTestResultCallback),(New-Object System.Windows.Media.PointHitTestParameters(($eventArgs.GetPosition($this)))))
+#			$Camera3.Rotate("0, 0, 1", (2 * $angleX), $(GetTouchPoint ($eventArgs.GetPosition($this))));
+#			$Camera3.Rotate($Camera3.RightDirection, (2 * $angleY), $(GetTouchPoint ($eventArgs.GetPosition($this))));
+			#Write-Warning ($camera3 | ConvertTo-Json)
+            #$Camera3.Rotate([Math3D]::UnitZ, (2 * $angleX));
+			#$Camera3.Rotate($($Camera3.RightDirection()), (2 * $angleY));
+            $null = [W32API.Mouse]::SetCursorPos($CursorPositionX,$CursorPositionY)
+        }
+    })
+
     $MainViewPort.Add_MouseDown({
         Param ([Object] $sender, [MouseButtonEventArgs]$eventArgs)
-        $mouse_position = $eventArgs.GetPosition($MainViewPort)
-        Write-Warning $mouse_position
-        [HitTestResult]$result = [VisualTreeHelper]::HitTest($MainViewPort, $mouse_position)
-        [RayMeshGeometry3DHitTestResult]$mesh_result = $result -as [RayMeshGeometry3DHitTestResult]
-        if($mesh_result -ne $null){
-            Write-warning ($models[$mesh_result.ModelHit]).Name
-            Write-Warning ($mesh_result)
-            Write-Warning $mesh_result.DistanceToRayOrigin
-            Write-Warning $mesh_result.PointHit.ToString()
-            [MeshGeometry3D]$mesh = $mesh_result.MeshHit
-            Write-Warning $mesh.positions[$mesh_result.VertexIndex1].toString()
-            Write-Warning $mesh.positions[$mesh_result.VertexIndex2].toString()
-            Write-Warning $mesh.positions[$mesh_result.VertexIndex3].toString()
+        if($eventArgs.LeftButton){
+            $mouse_position = $eventArgs.GetPosition($MainViewPort)
+            Write-Warning $mouse_position
+            [HitTestResult]$result = [VisualTreeHelper]::HitTest($MainViewPort, $mouse_position)
+            [RayMeshGeometry3DHitTestResult]$mesh_result = $result -as [RayMeshGeometry3DHitTestResult]
+            if($mesh_result -ne $null){
+                Write-warning ($models[$mesh_result.ModelHit]).Name
+                Write-Warning ($mesh_result)
+                Write-Warning $mesh_result.DistanceToRayOrigin
+                Write-Warning $mesh_result.PointHit.ToString()
+                [MeshGeometry3D]$mesh = $mesh_result.MeshHit
+                Write-Warning $mesh.positions[$mesh_result.VertexIndex1].toString()
+                Write-Warning $mesh.positions[$mesh_result.VertexIndex2].toString()
+                Write-Warning $mesh.positions[$mesh_result.VertexIndex3].toString()
+            }
         }
-
     })
 
 
@@ -427,8 +530,8 @@ $mainWindow.window.Add_Loaded({
 #Function TimerTick([object]$sender, [EventArgs]$e){}
 $timer.Tag = [SphereAction]::Nothing
 $timer.add_Tick({
-    # here need to change the way how moving is done, with a too fast timer powershell crashes quite fast
-	if($Camera.MovingUpDirectionIsLocked -eq $true){
+    # here need to change the way how moving is done, with a too fast timer powershell crashes quite fast	
+    if($Camera.MovingUpDirectionIsLocked -eq $true){
         $camera.Move($camera.camera.LookDirection, +$camera.amount)
         $ball.Move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
         $camera3.Move($camera.camera.LookDirection, +$camera.amount)
@@ -436,12 +539,6 @@ $timer.add_Tick({
         Switch ($action){
             'Collision' {
                 $opponentball.move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
-                if(($opponentball.GetBoundsOrigin().X -gt 10) -or ($opponentball.GetBoundsOrigin().X -lt -10) -or ($opponentball.GetBoundsOrigin().Z -gt 10) -or ($opponentball.GetBoundsOrigin().Z -lt -10)){
-                    $mainWindow.Storyboard($mythis,"OpponentBall",($opponentball.GetModelGroup()),($opponentball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
-                    $MainViewPort.camera = $camera2.camera
-                    $Global:disablekeys = $true
-                    $timer.Stop()
-                }
             }
             Default{}
         }
@@ -474,12 +571,6 @@ $timer.add_Tick({
                 $inverseY = [double]$camera.camera.LookDirection.Y * -1
                 $inverseZ = [double]$camera.camera.LookDirection.Z * -1
                 $opponentball.move("$inverseX,$inverseY,$inverseZ", +$camera.amount)
-                if(($opponentball.GetBoundsOrigin().X -gt 10) -or ($opponentball.GetBoundsOrigin().X -lt -10) -or ($opponentball.GetBoundsOrigin().Z -gt 10) -or ($opponentball.GetBoundsOrigin().Z -lt -10)){
-                    $mainWindow.Storyboard($mythis,"OpponentBall",($opponentball.GetModelGroup()),($opponentball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
-                    $MainViewPort.camera = $camera2.camera
-                    $Global:disablekeys = $true
-                    $timer.Stop()
-                }
             }
             Default{}
         }
@@ -503,6 +594,33 @@ $timer.add_Tick({
         $Global:disablekeys = $true
         $timer.Stop()
     }
+
+    # Get user ball origin and try to move opponent ball there
+    # tähän tarvii rakentaa jotain millä hiffaa minne päin pitäisi mennä
+    [SphereAction] $action = $opponentball.Intersect($opponentball,$ball)
+    Switch ($action){
+        'Collision' {
+            #Write-Warning "$($ball.GetBoundsOrigin().X,0.0,$ball.GetBoundsOrigin().Z), +$($Camera.amount)"
+            #$opponentball.move("$($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z)", +$camera.amount)
+        }
+        Default{
+            [double]$turnamount = 5
+            [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
+            $opponentball.Rotate($vector,$turnamount)
+            $opponentmoveX = $ball.GetBoundsOrigin().X
+            $opponentmoveZ = $ball.GetBoundsOrigin().Z
+            #Write-Warning "$($opponentmoveX,0.0,$opponentmoveZ)"
+            $opponentball.move("$($ball.GetBoundsOrigin().X,0.0,$ball.GetBoundsOrigin().Z)", +$Camera.amount)
+        }
+    }    
+    
+    if(($opponentball.GetBoundsOrigin().X -gt 10) -or ($opponentball.GetBoundsOrigin().X -lt -10) -or ($opponentball.GetBoundsOrigin().Z -gt 10) -or ($opponentball.GetBoundsOrigin().Z -lt -10)){
+        $mainWindow.Storyboard($mythis,"OpponentBall",($opponentball.GetModelGroup()),($opponentball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
+        $MainViewPort.camera = $camera2.camera
+        $Global:disablekeys = $true
+        $timer.Stop()
+    }
+
 })
 
 
@@ -566,19 +684,22 @@ $window.Add_KeyDown({
                 }
                 'D1'{
                     $MainViewPort.camera = $camera2.camera
+                    $MainViewPort.tag = "Camera2"
                     Break;
                 }
                 'D2'{
                     $MainViewPort.camera = $camera.camera
+                    $MainViewPort.tag = "Camera"
                     Break;
                 }
                 'D3'{
                     $MainViewPort.camera = $camera3.camera
+                    $MainViewPort.tag = "Camera3"
                     Break;
                 }
                 'space'{
                     # $namespace,$modelgroup,$TranslateTransform3D,$action,$fromX,$fromY,$fromZ,$toX,$toY,$toZ,$duration
-                    $mainWindow.Storyboard($mythis,"UserBall",($ball.GetModelGroup()),($ball.getTranslateTransform()),"Jump",0,0,0,0,0.5,0,0.5)
+                    $mainWindow.Storyboard($mythis,"UserBall",($ball.GetModelGroup()),($ball.getTranslateTransform()),"Jump",0,0,0,0,1.0,0,0.5)
                     Break;
                 }
             }

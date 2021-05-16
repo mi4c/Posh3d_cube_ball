@@ -41,14 +41,15 @@ Class Sphere{
         $this.startY = $startY
         $this.startZ = $startZ
     }
-    Sphere([Sphere]$sphere,[Double]$startX,[Double]$startY,[Double]$startZ,[Double]$radius,[Int]$num_phi, [Int]$num_theta, $imagefile,[Bool]$transparent,[String]$Name,$models,$Tag){
+#    Sphere([Sphere]$sphere,[Double]$startX,[Double]$startY,[Double]$startZ,[Double]$radius,[Int]$num_phi, [Int]$num_theta, $imagefile,[Bool]$transparent,[String]$Name,$models,$Tag){
+    Sphere([Sphere]$sphere,[System.Windows.Media.Media3D.Point3D]$startlocation,[Double]$radius,[Int]$num_phi, [Int]$num_theta, $imagefile,[Bool]$transparent,[String]$Name,$models,$Tag){
         $this.width = $sphere.width
         $this.height = $sphere.height
         $this.depth = $sphere.depth
         $this.SphereModelGroup = New-Object System.Windows.Media.Media3D.Model3DGroup
-        $this.startX = $startX
-        $this.startY = $startY
-        $this.startZ = $startZ
+        $this.startX = $startlocation.X
+        $this.startY = $startlocation.Y
+        $this.startZ = $startlocation.Z
         $this.startradius = $radius
         $this.startphi = $num_phi
         $this.starttheta = $num_theta
