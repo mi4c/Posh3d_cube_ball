@@ -16,6 +16,8 @@
     [Bool]$MovingUpDirectionIsLocked
     [Bool]$MovingDownDirectionIsLocked
     [String]$Stopmoving
+    [System.Windows.Media.Media3D.RotateTransform3D]$rotateTransform
+
     
     [Void] add_PropertyChanged([System.ComponentModel.PropertyChangedEventHandler] $propertyChanged) {
         $this.PropertyChanged = [Delegate]::Combine($this.PropertyChanged, $propertyChanged)
@@ -242,6 +244,28 @@
     [System.Windows.Media.Media3D.Vector3D]LookDirection(){
         Return $this.Camera.LookDirection
     }
+
+	[void]MouseRotateX([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle){
+        [System.Windows.Media.Media3D.Transform3DGroup]$group = New-Object System.Windows.Media.Media3D.Transform3DGroup
+        $rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($axis, $angle);
+        $this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotation), ($this.Camera.Position));
+        #Write-Warning ($this.camera | ConvertTo-Json)
+        #$this.camera.transform = $this.rotateTransform
+        $group.Children.Add($this.camera.transform)
+        $group.Children.Add($this.rotateTransform)
+        $this.camera.transform = $group
+	}
+
+	[void]MouseRotateY([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle){
+        [System.Windows.Media.Media3D.Transform3DGroup]$group = New-Object System.Windows.Media.Media3D.Transform3DGroup
+        $rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($axis, $angle);
+        $this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotation), ($this.Camera.Position));
+        #Write-Warning ($this.camera | ConvertTo-Json)
+        #$this.camera.transform = $this.rotateTransform
+        $group.Children.Add($this.camera.transform)
+        $group.Children.Add($this.rotateTransform)
+        $this.camera.transform = $group
+	}
 
     [System.Windows.Media.Media3D.Vector3D]LookDirection([System.Windows.Media.Media3D.Vector3D]$value){
         if($this.MovingDirectionIsLocked){

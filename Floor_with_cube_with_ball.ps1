@@ -453,49 +453,68 @@ $mainWindow.window.Add_Loaded({
                 $CursorPositionY = ($WindowPositionY + ($WindowSizeHeight/2))
             }
             $null = [W32API.Mouse]::SetCursorPos($CursorPositionX,$CursorPositionY)
-			[double]$factor = 0.005;
-            #Write-Warning $eventArgs.GetPosition($this).X
-            #Write-Warning ($mainWindow.content.ActualWidth | ConvertTo-Json)
             
-#            if(($mainWindow.window.content.ActualWidth / 2) -ge $eventArgs.GetPosition($this).X){
-            if((($mainWindow.window.content.ActualWidth / 2) -gt $eventArgs.GetPosition($this).X)){
-                $Global:NewCursorpositionX = $NewCursorpositionX - $CursorPositionX
-                #$Global:NewCursorpositionY = $NewCursorpositionY - $CursorPositionY
-                Write-Warning "Osuiko isompi"
-                Write-Warning $eventArgs.GetPosition($this).X
-                Write-Warning ($mainWindow.window.content.ActualWidth / 2)
-			    [double]$angleX = ((($NewCursorpositionX) + ($eventArgs.GetPosition($this).X)) * $factor);
-			    #[double]$angleY = ((($NewCursorpositionY) + ($eventArgs.GetPosition($this).Y)) * $factor);
-                $rotationX = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D("0,$($NewCursorPositionX),0", +$angleX)
-                #$rotationY = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D("0,0,$($NewCursorPositionY)", +$angleY)
-                $rotateTransformX = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotationX), ($camera3.Camera.Position));
-                #$rotateTransformY = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotationY), ($camera3.Camera.Position));
-                #$camera3.camera.transform = $rotateTransformY
-                $camera3.camera.transform = $rotateTransformX
-            } 
-            elseif((($mainWindow.window.content.ActualWidth / 2) -lt $eventArgs.GetPosition($this).X)){
-                $Global:NewCursorpositionX = $NewCursorpositionX + $CursorPositionX
-                #$Global:NewCursorpositionY = $NewCursorpositionY +$CursorPositionY
-                Write-Warning "Entä osuiko pienempi"
-                Write-Warning $eventArgs.GetPosition($this).X
-                Write-Warning ($mainWindow.window.content.ActualWidth / 2)
-			    [double]$angleX = ((($NewCursorpositionX) + ($eventArgs.GetPosition($this).X)) * $factor);
-			    #[double]$angleY = (($NewCursorpositionY + $eventArgs.GetPosition($this).Y) * $factor);
-                $rotationX = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D("0,$($NewCursorPositionX),0", +$angleX)
-                #$rotationY = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D("0,0,$($NewCursorPositionY)", $angleY)
-                $rotateTransformX = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotationX), ($camera3.Camera.Position));
-                #$rotateTransformY = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotationY), ($camera3.Camera.Position));
-                #$camera3.camera.transform = $rotateTransformY
-                $camera3.camera.transform = $rotateTransformX
+            if($mainWindow.window.WindowState -ne 2){
+                # WINDOW
+                # X
+                [double]$factor = 2.0;
+                if((($mainWindow.window.content.ActualWidth / 2) -gt $eventArgs.GetPosition($this).X) -and ($mainWindow.window.content.ActualWidth / 2) -ne $eventArgs.GetPosition($this).X){
+                    Write-Warning "Vasen"
+                    [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
+                    $camera3.MouseRotateX($vector,$factor)
+                } 
+                elseif((($mainWindow.window.content.ActualWidth / 2) -lt $eventArgs.GetPosition($this).X) -and ($mainWindow.window.content.ActualWidth / 2) -ne $eventArgs.GetPosition($this).X){
+                    Write-Warning "Oikea"
+                    [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, -1, 0)
+                    $camera3.MouseRotateX($vector,$factor)
+                }
+                #Y
+                if(((($mainWindow.window.content.ActualHeight / 2)-11.5) -gt $eventArgs.GetPosition($this).Y) -and (($mainWindow.window.content.ActualHeight / 2)-11.5) -ne $eventArgs.GetPosition($this).Y){
+                    Write-Warning "Ylös"
+                    Write-Warning "ikkuna $($mainWindow.window.content.ActualHeight / 2)"
+                    Write-Warning "hiiri $($eventArgs.GetPosition($this).Y)"
+                    #Write-Warning ($mainWindow | ConvertTo-Json)
+                    [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 0, -1)
+                    $camera3.MouseRotateY($vector,$factor)
+#                    $Camera3.ChangePitch($factor)
+                } 
+                elseif(((($mainWindow.window.content.ActualHeight / 2)-11.5) -lt $eventArgs.GetPosition($this).Y) -and (($mainWindow.window.content.ActualHeight / 2)-11.5) -ne $eventArgs.GetPosition($this).Y){
+                    Write-Warning "Alas"
+                    Write-Warning "ikkuna $($mainWindow.window.content.ActualHeight / 2)"
+                    Write-Warning "hiiri $($eventArgs.GetPosition($this).Y)"
+                    [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 0, 1)
+                    $camera3.MouseRotateY($vector,$factor)
+#                    $Camera3.ChangePitch(-$factor)
+                }
+            } else {
+                # FULL SCREEN
+                # X
+			    [double]$factor = 5.0;
+                if((($mainWindow.window.ActualWidth / 2) -gt $eventArgs.GetPosition($this).X) -and ($mainWindow.window.ActualWidth / 2) -ne $eventArgs.GetPosition($this).X){
+                    Write-Warning "Vasen"
+                    [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
+                    $camera3.MouseRotateX($vector,$factor)
+                } 
+                elseif((($mainWindow.window.ActualWidth / 2) -lt $eventArgs.GetPosition($this).X) -and ($mainWindow.window.ActualWidth / 2) -ne $eventArgs.GetPosition($this).X){
+                    Write-Warning "Oikea"
+                    [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, -1, 0)
+                    $camera3.MouseRotateX($vector,$factor)
+                }
+                #Y
+                if((($mainWindow.window.ActualHeight / 2) -gt $eventArgs.GetPosition($this).Y) -and ($mainWindow.window.ActualHeight / 2) -ne $eventArgs.GetPosition($this).Y){
+                    Write-Warning "Ylös"
+                    [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 0, -1)
+                    $camera3.MouseRotateY($vector,$factor)
+#                    $Camera3.ChangePitch($factor)
+                } 
+                elseif((($mainWindow.window.ActualHeight / 2) -lt $eventArgs.GetPosition($this).Y) -and ($mainWindow.window.ActualHeight / 2) -ne $eventArgs.GetPosition($this).Y){
+                    Write-Warning "Alas"
+                    [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 0, 1)
+                    $camera3.MouseRotateY($vector,$factor)
+#                    $Camera3.ChangePitch(-$factor)
+                }
             }
-            #Write-Warning (GetTouchPoint ($eventArgs.GetPosition($this)) $MainViewPort)
-            #[HitTestResult]$result = [VisualTreeHelper]::HitTest($MainViewPort, "$($CursorPositionX),$($CursorPositionY)")
-            #$htr = [System.Windows.Media.VisualTreeHelper]::HitTest($viewport, $null, (HitTestResultCallback),(New-Object System.Windows.Media.PointHitTestParameters(($eventArgs.GetPosition($this)))))
-#			$Camera3.Rotate("0, 0, 1", (2 * $angleX), $(GetTouchPoint ($eventArgs.GetPosition($this))));
-#			$Camera3.Rotate($Camera3.RightDirection, (2 * $angleY), $(GetTouchPoint ($eventArgs.GetPosition($this))));
-			#Write-Warning ($camera3 | ConvertTo-Json)
-            #$Camera3.Rotate([Math3D]::UnitZ, (2 * $angleX));
-			#$Camera3.Rotate($($Camera3.RightDirection()), (2 * $angleY));
+
             $null = [W32API.Mouse]::SetCursorPos($CursorPositionX,$CursorPositionY)
         }
     })
