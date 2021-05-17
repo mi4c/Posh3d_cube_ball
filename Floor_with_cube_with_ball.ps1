@@ -459,35 +459,25 @@ $mainWindow.window.Add_Loaded({
                 # X
                 [double]$factor = 0.50;
                 if((($mainWindow.window.content.ActualWidth / 2) -gt $eventArgs.GetPosition($this).X) -and ($mainWindow.window.content.ActualWidth / 2) -ne $eventArgs.GetPosition($this).X){
-                    Write-Warning "Vasen"
+                    $Camera3.ChangeYaw($factor)
                     [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
-                    $camera3.MouseRotateX($vector,$factor)
+                    $ball.Rotate($vector,$factor)
                 } 
                 elseif((($mainWindow.window.content.ActualWidth / 2) -lt $eventArgs.GetPosition($this).X) -and ($mainWindow.window.content.ActualWidth / 2) -ne $eventArgs.GetPosition($this).X){
-                    Write-Warning "Oikea"
+                    $Camera3.ChangeYaw(-$factor)
                     [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, -1, 0)
-                    $camera3.MouseRotateX($vector,$factor)
+                    $ball.Rotate($vector,$factor)
                 }
                 #Y
                 if(((($mainWindow.window.content.ActualHeight / 2)-11.5) -gt $eventArgs.GetPosition($this).Y) -and (($mainWindow.window.content.ActualHeight / 2)-11.5) -ne $eventArgs.GetPosition($this).Y){
-                    #Write-Warning "Ylös"
-                    #Write-Warning "ikkuna $($mainWindow.window.content.ActualHeight / 2)"
-                    #Write-Warning "hiiri $($eventArgs.GetPosition($this).Y)"
-                    #Write-Warning ($mainWindow | ConvertTo-Json)
-                    #[System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 0, -1)
                     $camera3.MouseRotateY($camera3.RightDirection(),$factor)
-                    #Write-Warning ($camera3.camera | convertto-json)
-#                    $Camera3.ChangePitch($factor)
+                    [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 0, -1)
+                    $ball.Rotate($vector,$factor)
                 } 
                 elseif(((($mainWindow.window.content.ActualHeight / 2)-11.5) -lt $eventArgs.GetPosition($this).Y) -and (($mainWindow.window.content.ActualHeight / 2)-11.5) -ne $eventArgs.GetPosition($this).Y){
-                    #Write-Warning "Alas"
-                    #Write-Warning "ikkuna $($mainWindow.window.content.ActualHeight / 2)"
-                    #Write-Warning "hiiri $($eventArgs.GetPosition($this).Y)"
-                    #[System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 0, 1)
-                    
                     $camera3.MouseRotateY($camera3.LeftDirection(),$factor)
-                    #Write-Warning ($camera3.camera | convertto-json)
-#                    $Camera3.ChangePitch(-$factor)
+                    [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 0, 1)
+                    $ball.Rotate($vector,$factor)
                 }
             } else {
                 # FULL SCREEN
