@@ -258,8 +258,12 @@
 
 	[void]MouseRotateY([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle){
         [System.Windows.Media.Media3D.Transform3DGroup]$group = New-Object System.Windows.Media.Media3D.Transform3DGroup
-        $rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($axis, $angle);
+        $rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D(($axis), $angle);
+        [System.Windows.Media.Media3D.Quaternion]$q = New-Object System.Windows.Media.Media3D.Quaternion(($axis), $angle)
+        $test = [Math3D]::Transform($q,$axis)
+        
         $this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotation), ($this.Camera.Position));
+        #$this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotation), ($test));
         #Write-Warning ($this.camera | ConvertTo-Json)
         #$this.camera.transform = $this.rotateTransform
         $group.Children.Add($this.camera.transform)
