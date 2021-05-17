@@ -476,7 +476,7 @@ $mainWindow.window.Add_Loaded({
                     #Write-Warning ($mainWindow | ConvertTo-Json)
                     #[System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 0, -1)
                     $camera3.MouseRotateY($camera3.RightDirection(),$factor)
-                    Write-Warning ($camera3.camera | convertto-json)
+                    #Write-Warning ($camera3.camera | convertto-json)
 #                    $Camera3.ChangePitch($factor)
                 } 
                 elseif(((($mainWindow.window.content.ActualHeight / 2)-11.5) -lt $eventArgs.GetPosition($this).Y) -and (($mainWindow.window.content.ActualHeight / 2)-11.5) -ne $eventArgs.GetPosition($this).Y){
@@ -486,7 +486,7 @@ $mainWindow.window.Add_Loaded({
                     #[System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 0, 1)
                     
                     $camera3.MouseRotateY($camera3.LeftDirection(),$factor)
-                    Write-Warning ($camera3.camera | convertto-json)
+                    #Write-Warning ($camera3.camera | convertto-json)
 #                    $Camera3.ChangePitch(-$factor)
                 }
             } else {
