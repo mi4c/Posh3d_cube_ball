@@ -29,8 +29,7 @@ Class Sphere{
     [System.Windows.Media.Media3D.Model3DGroup]$SphereModelGroup
     [String]$Name
     [String]$Tag
-
-    
+    [System.Windows.Media.Media3D.Vector3D]$lookdirection
 
     Sphere([System.Windows.Media.Media3D.Point3D]$P0,[Double]$w,[Double]$h,[Double]$d,[Double]$startX,[Double]$startY,[Double]$startZ){
         $this.width = $w

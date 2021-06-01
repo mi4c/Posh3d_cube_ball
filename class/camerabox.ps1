@@ -246,30 +246,32 @@
     }
 
 	[void]MouseRotateX([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle){
-        [System.Windows.Media.Media3D.Transform3DGroup]$group = New-Object System.Windows.Media.Media3D.Transform3DGroup
-        $rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($axis, $angle);
-        $this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotation), ($this.Camera.Position));
-        #Write-Warning ($this.camera | ConvertTo-Json)
-        #$this.camera.transform = $this.rotateTransform
-        $group.Children.Add($this.camera.transform)
-        $group.Children.Add($this.rotateTransform)
-        $this.camera.transform = $group
+        $rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D(($axis), $angle) -ErrorAction Stop
+        [System.Windows.Media.Media3D.Quaternion]$q = New-Object System.Windows.Media.Media3D.Quaternion(($axis), $angle) -ErrorAction Stop
+        $this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotation), ($this.Camera.Position)) -ErrorAction Stop
+        $this.addTransform($this.camera, $this.rotateTransform)
 	}
 
 	[void]MouseRotateY([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle){
-        [System.Windows.Media.Media3D.Transform3DGroup]$group = New-Object System.Windows.Media.Media3D.Transform3DGroup
-        $rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D(($axis), $angle);
-        [System.Windows.Media.Media3D.Quaternion]$q = New-Object System.Windows.Media.Media3D.Quaternion(($axis), $angle)
-        $test = [Math3D]::Transform($q,$axis)
-        
-        $this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotation), ($this.Camera.Position));
-        #$this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotation), ($test));
-        #Write-Warning ($this.camera | ConvertTo-Json)
-        #$this.camera.transform = $this.rotateTransform
-        $group.Children.Add($this.camera.transform)
-        $group.Children.Add($this.rotateTransform)
-        $this.camera.transform = $group
+        $rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D(($axis), $angle) -ErrorAction Stop
+        [System.Windows.Media.Media3D.Quaternion]$q = New-Object System.Windows.Media.Media3D.Quaternion(($axis), $angle) -ErrorAction Stop
+        $this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotation), ($this.Camera.Position)) -ErrorAction Stop
+        $this.addTransform($this.camera, $this.rotateTransform)
 	}
+
+    [void]addTransform([System.Windows.Media.Media3D.PerspectiveCamera]$camera, [System.Windows.Media.Media3D.Transform3D]$transform)
+    {
+        [System.Windows.Media.Media3D.Transform3DGroup]$group = New-Object System.Windows.Media.Media3D.Transform3DGroup
+        if ($camera.Transform -ne $null -and $camera.Transform -ne [System.Windows.Media.Media3D.Transform3D]::Identity)
+        {
+            if ($camera.Transform -is [System.Windows.Media.Media3D.Transform3D])
+            {
+                $group.Children.Add($camera.Transform);
+            }
+        }
+        $group.Children.Add($transform);
+        $camera.Transform = $group;
+    }
 
     [System.Windows.Media.Media3D.Vector3D]LookDirection([System.Windows.Media.Media3D.Vector3D]$value){
         if($this.MovingDirectionIsLocked){
@@ -292,10 +294,20 @@
     }
 
     [System.Windows.Media.Media3D.Vector3D]LeftDirection(){
-        Return [System.Windows.Media.Media3D.Vector3D]::CrossProduct($this.Camera.UpDirection,($this.Camera.LookDirection))
+        Try{
+            $result = [System.Windows.Media.Media3D.Vector3D]::CrossProduct($this.Camera.UpDirection,($this.Camera.LookDirection))
+        } Catch {
+            $result = "Error"
+        }
+        Return $result
     }
     [System.Windows.Media.Media3D.Vector3D]RightDirection(){
-        Return [System.Windows.Media.Media3D.Vector3D]::CrossProduct($this.Camera.LookDirection,($this.Camera.UpDirection))
+        Try{
+            $result = [System.Windows.Media.Media3D.Vector3D]::CrossProduct($this.Camera.LookDirection,($this.Camera.UpDirection))
+        } Catch {
+            $result = "Error"
+        }
+        Return $result
     }
 
     [Double]RollAngle(){
@@ -351,10 +363,10 @@
 	[void]Rotate([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle){
 		[System.Windows.Media.Media3D.Quaternion]$q = ([Math3D]::Rotation($axis, $angle));
         # this would be needed to add roll behaviour, but it mess the origin as this rotate is planned for a moving air plane
-		#$this.camera.Position = [Math3D]::Transform($q,$this.camera.Position);
+		$this.camera.Position = [Math3D]::Transform($q,$this.camera.Position);
 
         # this would be needed to add roll behaviour, but it mess the origin as this rotate is planned for a moving air plane
-		#$this.camera.UpDirection = [Math3D]::Transform($q,$this.camera.UpDirection);
+		$this.camera.UpDirection = [Math3D]::Transform($q,$this.camera.UpDirection);
 		$this.camera.LookDirection = [Math3D]::Transform($q,$this.camera.LookDirection);        
 	}
 
