@@ -733,22 +733,22 @@ $window.Add_KeyDown({
                 }
                 'Left'{
                     [double]$turnamount = 5
-                    $Camera.ChangeYaw($turnamount)
+                    #$Camera.ChangeYaw($turnamount)
                     #$Camera3.ChangeYaw($turnamount)
-                    #[System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
-                    #$ball.Rotate($vector,$turnamount)
+                    [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
+                    $ball.Rotate($vector,$turnamount)
                     #Write-Warning "vanha $($ball.lookdirection)"
-                    #$ball.lookdirection = $Camera.camera.lookdirection
+                    $ball.lookdirection = $Camera.camera.lookdirection
                     #Write-Warning "uus $($ball.lookdirection)"
                     Break;
                 }
                 'Right'{
                     [double]$turnamount = 5
-                    $Camera.ChangeYaw(-$turnamount)
+                    #$Camera.ChangeYaw(-$turnamount)
                     #$Camera3.ChangeYaw(-$turnamount)
-                    #[System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, -1, 0)
-                    #$ball.Rotate($vector,$turnamount)
-                    #$ball.lookdirection = $Camera.camera.lookdirection
+                    [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, -1, 0)
+                    $ball.Rotate($vector,$turnamount)
+                    $ball.lookdirection = $Camera.camera.lookdirection
                     Break;
                 }
                 'space'{
