@@ -8,19 +8,13 @@ I really don't think I'm an advanced powershell scripter even I do share this "f
 This is just my test how to do some 3D graphics with powershell...
 And to get more familiar with powershell classes. Currently I need to deep dive and try to understand more about quaternion, that I get my cam3 mouse look working better.
 
-Issue: Powershell does close the console itself as a built in safety reason, when multiple commands try to control the script.
-I try to overcome with that and find a way how to get this working without moving up to use some other language.
-
-Currently issue is that I try to give user too much control with timer ticks and key presses that are too fast and that triggers the powershell safety process.
-Powershell idea is: better not to give a script ability to do it's own than give something that is not anymore accurate...
-
-Try to drop the second ball out of the plate, or run with your controlled ball out from the plate.
+Issue: Ball movement is now currently broken, I fixed issue with camera 2 that script doesn't crash when moving camera. Now I need to figure out how to do that with the ball also.
 
 Move ball with keys up,down,left,right
 
 Look ball up and down with keys t,g in camera3
 
-Move skycam with keys w,s,a,d
+This is now currently also broken: Move skycam with keys w,s,a,d
 
 zoomin/out skycam keys r,f
 
@@ -30,9 +24,9 @@ Cam1 skycam
 - maybe i'll try to transfer this camera under mouse control and change ball movent keys to wsad keys.
 
 cam2 ball movement cam
+- Doesn't anymore break the code
 
-cam3 ball lookcam, so you can look also up without messing the moving algorithm.
-- i'm trying to transfer this camera free look into the mouse control
+cam3 is about to be discarded later... Currently no value.
 
 ![fun1](/Screenshots/fun1.PNG)
 ![fun2](/Screenshots/fun2.PNG)
