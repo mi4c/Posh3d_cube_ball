@@ -10,27 +10,33 @@
     [Bool]$outofscope
 	[System.Windows.Media.Media3D.Vector3D]$targetUp
     [System.Windows.Media.Media3D.Vector3D]$targetLook
-    Hidden [System.ComponentModel.PropertyChangedEventHandler] $PropertyChanged
+    [System.ComponentModel.PropertyChangedEventHandler]$PropertyChanged
     [System.Windows.Media.Media3D.Vector3D]$MovingDirection
     [System.Windows.Media.Media3D.PerspectiveCamera]$Camera = (New-Object System.Windows.Media.Media3D.PerspectiveCamera);
     [Bool]$MovingUpDirectionIsLocked
     [Bool]$MovingDownDirectionIsLocked
     [String]$Stopmoving
     [System.Windows.Media.Media3D.RotateTransform3D]$rotateTransform
+    [System.Windows.Media.Media3D.TranslateTransform3D]$translateTransform
 
     
     [Void] add_PropertyChanged([System.ComponentModel.PropertyChangedEventHandler] $propertyChanged) {
-        $this.PropertyChanged = [Delegate]::Combine($this.PropertyChanged, $propertyChanged)
+        $this.camera.PropertyChanged = [Delegate]::Combine($this.camera.PropertyChanged, $propertyChanged)
     }
 
     [Void] remove_PropertyChanged([System.ComponentModel.PropertyChangedEventHandler] $propertyChanged) {
-        $this.PropertyChanged = [Delegate]::Remove($this.PropertyChanged, $propertyChanged)
+        $this.camera.PropertyChanged = [Delegate]::Remove($this.camera.PropertyChanged, $propertyChanged)
     }
 
     [Void] TriggerPropertyChanged([String]$propertyname){
-        if($this.PropertyChanged -ne $null){
-            $this.PropertyChanged.Invoke($this, (New-Object PropertyChangedEventArgs $propertyName))
+        if($this.camera.PropertyChanged -cne $null){
+            $this.camera.PropertyChanged.Invoke($this, (New-Object PropertyChangedEventArgs $propertyName))
         }
+    }
+
+    [System.Windows.Media.Media3D.TranslateTransform3D]getTranslateTransform()
+    {
+        return [System.Windows.Media.Media3D.TranslateTransform3D]$this.translateTransform;
     }
 
     [void] PositionFlyCamera([Double]$degrees,[Double]$value, $direction){
@@ -245,34 +251,6 @@
         Return $this.Camera.LookDirection
     }
 
-	[void]MouseRotateX([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle){
-        $rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D(($axis), $angle) -ErrorAction Stop
-        [System.Windows.Media.Media3D.Quaternion]$q = New-Object System.Windows.Media.Media3D.Quaternion(($axis), $angle) -ErrorAction Stop
-        $this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotation), ($this.Camera.Position)) -ErrorAction Stop
-        $this.addTransform($this.camera, $this.rotateTransform)
-	}
-
-	[void]MouseRotateY([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle){
-        $rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D(($axis), $angle) -ErrorAction Stop
-        [System.Windows.Media.Media3D.Quaternion]$q = New-Object System.Windows.Media.Media3D.Quaternion(($axis), $angle) -ErrorAction Stop
-        $this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($($rotation), ($this.Camera.Position)) -ErrorAction Stop
-        $this.addTransform($this.camera, $this.rotateTransform)
-	}
-
-    [void]addTransform([System.Windows.Media.Media3D.PerspectiveCamera]$camera, [System.Windows.Media.Media3D.Transform3D]$transform)
-    {
-        [System.Windows.Media.Media3D.Transform3DGroup]$group = New-Object System.Windows.Media.Media3D.Transform3DGroup
-        if ($camera.Transform -ne $null -and $camera.Transform -ne [System.Windows.Media.Media3D.Transform3D]::Identity)
-        {
-            if ($camera.Transform -is [System.Windows.Media.Media3D.Transform3D])
-            {
-                $group.Children.Add($camera.Transform);
-            }
-        }
-        $group.Children.Add($transform);
-        $camera.Transform = $group;
-    }
-
     [System.Windows.Media.Media3D.Vector3D]LookDirection([System.Windows.Media.Media3D.Vector3D]$value){
         if($this.MovingDirectionIsLocked){
             Return $null
@@ -324,7 +302,7 @@
 	[int]Speed($value){
         if($this.speed -ne $value){
             $this.speed = $value
-            [Camerabox]::TriggerPropertyChanged($this.speed)
+            $this.TriggerPropertyChanged($this.speed)
             Return $this.speed
         } else {
             Return $null
@@ -339,7 +317,6 @@
 	[void]ChangeRoll([double]$angle)
 	{
         $this.Rotate($this.camera.LookDirection, $angle)
-		$this.camera.UpDirection = $this.camera.UpDirection;
 	}
 
 	[void]ChangePitch([double]$angle)
@@ -352,8 +329,8 @@
 	[void]ChangeHeading([double]$angle)
 	{
 		[System.Windows.Media.Media3D.Quaternion]$q = [Math3D]::RotationZ($angle);
-		$this.camera.UpDirection = $q.Transform($this.camera.UpDirection);
-		$this.camera.LookDirection = $q.Transform($this.camera.LookDirection);
+		$this.camera.UpDirection = [Math3D]::Transform($this.camera.UpDirection);
+		$this.camera.LookDirection = [Math3D]::Transform($this.camera.LookDirection);
 	}
 
 	[void]Move([System.Windows.Media.Media3D.Vector3D]$direction, [double]$amount){
@@ -361,20 +338,15 @@
 	}
 
 	[void]Rotate([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle){
-		[System.Windows.Media.Media3D.Quaternion]$q = ([Math3D]::Rotation($axis, $angle));
-        # this would be needed to add roll behaviour, but it mess the origin as this rotate is planned for a moving air plane
+		$q = [Math3D]::Rotation($axis, $angle)
 		$this.camera.Position = [Math3D]::Transform($q,$this.camera.Position);
-
-        # this would be needed to add roll behaviour, but it mess the origin as this rotate is planned for a moving air plane
 		$this.camera.UpDirection = [Math3D]::Transform($q,$this.camera.UpDirection);
 		$this.camera.LookDirection = [Math3D]::Transform($q,$this.camera.LookDirection);        
 	}
 
 	[void]Rotate([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle, [System.Windows.Media.Media3D.Point3D]$center){
-
-		$this.camera.Position = $this.camera.Position.Subtract($center);
-		$this.camera.Rotate($axis, $angle);
-		$this.camera.Position = $this.camera.Position.Add($center);
+		$this.Rotate($axis, $angle);
+        $this.camera.position = $center
 	}
 
 	[void]LookBack(){
@@ -445,7 +417,7 @@
 				$this.lookBackAngle = 0;
             }
 		} else {
-			[double]$factor = [Math]::Log10([Math]::Abs($this.Speed) + 1);			
+			[double]$factor = [Math]::Log10([Math]::Abs($this.Speed) + 1);
             # this might be the fix for the rotate roll angle origin mess, investigate it in future...
             #[double]$angle = [MathUtils]::ToRadians($this.RollAngle);
 			#$this.ChangeHeading($factor * [Math]::Sin($angle)); # makes 15 degrees per second at speed 9 and roll angle 30

@@ -210,7 +210,7 @@ class Math3D {
 	static [System.Windows.Media.Media3D.Vector3D]Rotate([System.Windows.Media.Media3D.Vector3D]$v, [System.Windows.Media.Media3D.Vector3D]$rotationAxis, [double]$angleInDegrees)
 	{
 		[System.Windows.Media.Media3D.Quaternion]$q = New-Object System.Windows.Media.Media3D.Quaternion($rotationAxis, $angleInDegrees);
-		return $q.Transform($v);
+		return [Math3D]::Transform($q,$v);
 	}
 
 	# Calculates the cross product of two vectors.
