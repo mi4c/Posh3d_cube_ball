@@ -46,7 +46,6 @@ Class Sphere{
         }
     }
 
-
     Sphere([System.Windows.Media.Media3D.Point3D]$P0,[Double]$w,[Double]$h,[Double]$d,[Double]$startX,[Double]$startY,[Double]$startZ){
         $this.width = $w
         $this.height = $h
@@ -74,6 +73,7 @@ Class Sphere{
         $this.origin = $sphere.GetBoundsorigin()
         $this.addMotionTransforms()
     }
+
 
     [void]AddSphere([System.Windows.Media.Media3D.MeshGeometry3D]$mesh, [System.Windows.Media.Media3D.Point3D]$center, [double]$radius, [int]$num_phi, [int]$num_theta)
     {
@@ -503,6 +503,8 @@ Class Sphere{
     [System.Windows.Media.Media3D.Point3D]Position(){
         Return $this.GetOrigin()
     }
+    # TODO: how to register these dependecy properties?
+    #static [System.Windows.DependencyProperty]$PositionProperty = [System.Windows.DependencyProperty]::Register("Position", [System.Windows.Media.Media3D.Point3D], [Sphere], (new-object System.Windows.UIPropertyMetadata(([Sphere]::),(New-Object System.Windows.PropertyChangedCallback([Sphere]::OnNewTransform)))))
 
 	[void]Rotate([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle, [System.Windows.Media.Media3D.Point3D]$center,$direction){
         $axis.Z = ($axis.Z + $this.SphereModelGroup.Transform.Rotation.axis.Z)
