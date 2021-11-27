@@ -142,7 +142,7 @@ function Cleanup-Variables {
 # Change in CameraPhi up/down Option Constant prevents this value to be changed
 New-Variable -Name FlyCameraDPhi -Value 0.05 -Option Constant
 New-Variable -Name FlyCameraDTheta -Value 0.05 -Option Constant
-New-Variable -Name FlyCameraDR -Value 0.05 -Option Constant
+New-Variable -Name FlyCameraDR -Value 0.25 -Option Constant
 
 
 Function durationM([double]$seconds)
@@ -493,35 +493,29 @@ $mainWindow.window.Add_Loaded({
                 [double]$xfactor = 0.50;
                 [double]$yfactor = 0.25;
                 if((($mainWindow.window.content.ActualWidth / 2) -gt $eventArgs.GetPosition($this).X) -and ($mainWindow.window.content.ActualWidth / 2) -ne $eventArgs.GetPosition($this).X){
-                    $direction = "Left"
+                    # Left
                     [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
                     $Camera.Rotate($axis,$xfactor,$Camera.position())
                     $Camera3.Rotate($axis,$xfactor,$Camera.position())
                     $ball.RotateX($xfactor)
-                    #$ball.lookdirection = $Camera.camera.lookdirection
                 }
                 elseif((($mainWindow.window.content.ActualWidth / 2) -lt $eventArgs.GetPosition($this).X) -and ($mainWindow.window.content.ActualWidth / 2) -ne $eventArgs.GetPosition($this).X){
-                    $direction = "Right"
+                    # Right
                     [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, -1, 0)
                     $Camera.Rotate($axis,$xfactor,$Camera.position())
                     $Camera3.Rotate($axis,$xfactor,$Camera.position())
                     $ball.RotateX(-$xfactor)
-                    #$ball.lookdirection = $Camera.camera.lookdirection
                 }
                 #Y
                 if(((($mainWindow.window.content.ActualHeight / 2)-11.5) -gt $eventArgs.GetPosition($this).Y) -and (($mainWindow.window.content.ActualHeight / 2)-11.5) -ne $eventArgs.GetPosition($this).Y){
-                    $direction = "Up"
+                    # Up
                     $Camera.ChangePitch($yfactor)
-                    $ball.RotateY($xfactor)
-                    #$ball.MouseRotateY($yfactor,$direction)
-                    #$ball.lookdirection = $Camera.camera.lookdirection
+                    $ball.RotateY($yfactor)
                 } 
                 elseif(((($mainWindow.window.content.ActualHeight / 2)-11.5) -lt $eventArgs.GetPosition($this).Y) -and (($mainWindow.window.content.ActualHeight / 2)-11.5) -ne $eventArgs.GetPosition($this).Y){
-                    $direction = "Down"
+                    # Down
                     $Camera.ChangePitch(-$yfactor)
-                    $ball.RotateY(-$xfactor)
-                    #$ball.MouseRotateY($yfactor,$direction)
-                    #$ball.lookdirection = $Camera.camera.lookdirection
+                    $ball.RotateY(-$yfactor)
                 }
             } else {
                 # FULL SCREEN
@@ -529,31 +523,29 @@ $mainWindow.window.Add_Loaded({
                 [double]$xfactor = 0.50;
                 [double]$yfactor = 0.25;
                 if((($mainWindow.window.ActualWidth / 2) -gt $eventArgs.GetPosition($this).X) -and ($mainWindow.window.ActualWidth / 2) -ne $eventArgs.GetPosition($this).X){
-                    $direction = "Left"
+                    # Left
                     [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
                     $Camera.Rotate($axis,$xfactor,$Camera.position())
+                    $Camera3.Rotate($axis,$xfactor,$Camera.position())
                     $ball.RotateX($xfactor)
-                    $ball.lookdirection = $Camera.camera.lookdirection
                 } 
                 elseif((($mainWindow.window.ActualWidth / 2) -lt $eventArgs.GetPosition($this).X) -and ($mainWindow.window.ActualWidth / 2) -ne $eventArgs.GetPosition($this).X){
-                    $direction = "Right"
+                    # Right
                     [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, -1, 0)
                     $Camera.Rotate($axis,$xfactor,$Camera.position())
+                    $Camera3.Rotate($axis,$xfactor,$Camera.position())
                     $ball.RotateX(-$xfactor)
-                    $ball.lookdirection = $Camera.camera.lookdirection
                 }
                 #Y
                 if(((($mainWindow.window.ActualHeight / 2)-23) -gt $eventArgs.GetPosition($this).Y) -and (($mainWindow.window.ActualHeight / 2)-23) -ne $eventArgs.GetPosition($this).Y){
-                    $direction = "Up"
+                    # Up
                     $Camera.ChangePitch($yfactor)
-                    $ball.MouseRotateY($yfactor,$direction)
-                    $ball.lookdirection = $Camera.camera.lookdirection
+                    $ball.RotateY($yfactor)
                 } 
                 elseif(((($mainWindow.window.ActualHeight / 2)-23) -lt $eventArgs.GetPosition($this).Y) -and (($mainWindow.window.ActualHeight / 2)-23) -ne $eventArgs.GetPosition($this).Y){
-                    $direction = "Down"
+                    # Down
                     $Camera.ChangePitch(-$yfactor)
-                    $ball.MouseRotateY($yfactor,$direction)
-                    $ball.lookdirection = $Camera.camera.lookdirection
+                    $ball.RotateY(-$yfactor)
                 }
             }
 
@@ -809,23 +801,15 @@ $window.Add_KeyDown({
                 Break;
             }
             't'{
-                [double]$turnamount = 5
-                $Camera.ChangePitch($turnamount)
+                [double]$yfactor = 5
+                $Camera.ChangePitch($yfactor)
+                $ball.RotateY($yfactor)
                 Break;
             }
             'g'{
-                [double]$turnamount = 5
-                $Camera.ChangePitch(-$turnamount)
-                Break;
-            }
-            'y'{
-                [double]$amount = 0.1
-                $ball.Move("0.0,0.1,0.0",+$amount)
-                Break;
-            }
-            'h'{
-                [double]$amount = -0.1
-                $ball.Move("0.0,-0.1,0.0",-$amount)
+                [double]$yfactor = 5
+                $Camera.ChangePitch(-$yfactor)
+                $ball.RotateY(-$yfactor)
                 Break;
             }
             'D1'{

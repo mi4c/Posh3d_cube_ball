@@ -11,6 +11,7 @@ And to get more familiar with powershell classes. Currently I need to deep dive 
 Move ball with keys up,down,left,right
 
 Mouselook in camera 2, the ball turns also the camera lookdirection
+(Ball not working ok with keys left,right,t,g)
 
 Move skycam with keys w,s,a,d
 
