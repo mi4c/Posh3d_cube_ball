@@ -278,51 +278,6 @@ Class Window{
         $ts = New-Object System.TimeSpan(0, 0, 0, 0, $this.durationM($seconds));
         return $ts;
     }
-
-    [Void]Storyboard($namespace,$MoveTransformString,$modelgroup,$TranslateTransform3D,$action,$fromX,$fromY,$fromZ,$toX,$toY,$toZ,$duration){
-        [double]$Totalduration = 0.0
-
-        $storyboard = New-Object System.Windows.Media.Animation.StoryBoard
-        $doubleAnimationX1 = New-Object System.Windows.Media.Animation.DoubleAnimation($fromX, $toX, ($this.durationTS($duration)))
-        $doubleAnimationY1 = New-Object System.Windows.Media.Animation.DoubleAnimation($fromY, $toY, ($this.durationTS($duration)))
-        $doubleAnimationZ1 = New-Object System.Windows.Media.Animation.DoubleAnimation($fromZ, $toZ, ($this.durationTS($duration)))
-        $OffsetXProperty = New-Object System.Windows.Media.Media3D.TranslateTransform3D
-        $OffsetYProperty = New-Object System.Windows.Media.Media3D.TranslateTransform3D
-        $OffsetZProperty = New-Object System.Windows.Media.Media3D.TranslateTransform3D
-        
-        [double]$offset = [Scene]::sceneSize * 0.45
-
-        $storyboard::SetTargetName($doubleAnimationX1,$MoveTransformString)
-        $storyboard::SetTargetProperty($doubleAnimationX1, (New-Object System.Windows.PropertyPath($OffsetXProperty::OffsetXProperty)))
-        $storyboard::SetTargetName($doubleAnimationY1,$MoveTransformString)
-        $storyboard::SetTargetProperty($doubleAnimationY1, (New-Object System.Windows.PropertyPath($OffsetYProperty::OffsetYProperty)))
-        $storyboard::SetTargetName($doubleAnimationZ1,$MoveTransformString)
-        $storyboard::SetTargetProperty($doubleAnimationZ1, (New-Object System.Windows.PropertyPath($OffsetZProperty::OffsetZProperty)))
-        $storyboard.Children.Add($doubleAnimationY1)
-        $doubleAnimationY1.BeginTime = ($this.durationTS($totalDuration))
-        Write-Warning $action
-        if($action -eq 'Jump'){
-            $doubleAnimationX2 = New-Object System.Windows.Media.Animation.DoubleAnimation($toX, $fromX, ($this.durationTS($duration)))
-            $doubleAnimationY2 = New-Object System.Windows.Media.Animation.DoubleAnimation($toY, $fromY, ($this.durationTS($duration)))
-            $doubleAnimationZ2 = New-Object System.Windows.Media.Animation.DoubleAnimation($toZ, $fromZ, ($this.durationTS($duration)))
-            $storyboard::SetTargetName($doubleAnimationX2,$MoveTransformString)
-            $storyboard::SetTargetProperty($doubleAnimationX2, (New-Object System.Windows.PropertyPath($OffsetXProperty::OffsetXProperty)))
-            $storyboard::SetTargetName($doubleAnimationY2,$MoveTransformString)
-            $storyboard::SetTargetProperty($doubleAnimationY2, (New-Object System.Windows.PropertyPath($OffsetYProperty::OffsetYProperty)))
-            $storyboard::SetTargetName($doubleAnimationZ2,$MoveTransformString)
-            $storyboard::SetTargetProperty($doubleAnimationZ2, (New-Object System.Windows.PropertyPath($OffsetZProperty::OffsetZProperty)))
-            $storyboard.Children.Add($doubleAnimationX2)
-            $storyboard.Children.Add($doubleAnimationY2)
-            $storyboard.Children.Add($doubleAnimationZ2)
-            $doubleAnimationX2.BeginTime = ($this.durationTS($duration))
-            $doubleAnimationY2.BeginTime = ($this.durationTS($duration))
-            $doubleAnimationZ2.BeginTime = ($this.durationTS($duration))
-        }
-
-        $Storyboard.RepeatBehavior = "1x"
-        $storyboard.Begin($namespace)
-        $Global:JumpFinished = $true
-    }
 }
 
 Add-Type -TypeDefinition @"
@@ -349,13 +304,6 @@ $camera = [CameraBox]::new()
 $camera2 = [CameraBox]::new()
 $camera3 = [CameraBox]::new()
 
-<#
-[System.Windows.DependencyProperty]$Global:PositionProperty = [System.Windows.DependencyProperty]::Register("Position", [System.Windows.Media.Media3D.Point3D], [Sphere], (new-object System.Windows.UIPropertyMetadata(([Sphere]::Position()),(New-Object System.Windows.PropertyChangedCallback([Sphere]::OnNewTransform([Sphere],[System.Windows.DependencyPropertyChangedEventArgs]))))))
-[System.Windows.DependencyProperty]$Global:Rotation1Property = [System.Windows.DependencyProperty]::Register("Rotation1", [System.Windows.Media.Media3D.Quaternion], [Sphere],(new-object System.Windows.UIPropertyMetadata([System.Windows.Media.Media3D.Quaternion]::Identity,(New-Object System.Windows.PropertyChangedCallback([Sphere]::OnNewTransform([Sphere],[System.Windows.DependencyPropertyChangedEventArgs]))))))
-[System.Windows.DependencyProperty]$Global:Rotation2Property = [System.Windows.DependencyProperty]::Register("Rotation2", [System.Windows.Media.Media3D.Quaternion], [Sphere],(new-object System.Windows.UIPropertyMetadata([System.Windows.Media.Media3D.Quaternion]::Identity,(New-Object System.Windows.PropertyChangedCallback([Sphere]::OnNewTransform([Sphere],[System.Windows.DependencyPropertyChangedEventArgs]))))))
-[System.Windows.DependencyProperty]$Global:Rotation3Property = [System.Windows.DependencyProperty]::Register("Rotation3", [System.Windows.Media.Media3D.Quaternion], [Sphere],(new-object System.Windows.UIPropertyMetadata([System.Windows.Media.Media3D.Quaternion]::Identity,(New-Object System.Windows.PropertyChangedCallback([Sphere]::OnNewTransform([Sphere],[System.Windows.DependencyPropertyChangedEventArgs]))))))
-#>
-
 # create a cube with dimensions as some fraction of the scene size
 [WpfCube]$cube = [WpfCube]::new($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize / 6), ([scene]::scenesize / 6), ([scene]::scenesize / 6))
 # construct our geometry model from the cube object
@@ -366,7 +314,7 @@ $camera3 = [CameraBox]::new()
 [Sphere]$sphere = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize / 100), ([scene]::scenesize / 100), ([scene]::scenesize / 100),2.74066683953478,0.6,8.00816300307612)
 [Sphere]$spheresky = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 0, 0")), ([scene]::scenesize), ([scene]::scenesize), ([scene]::scenesize),0,0,0)
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
-[System.Windows.Media.Media3D.Point3D]$userstartlocation = "9.18277104297157,1,-8.98384814917402"
+[System.Windows.Media.Media3D.Point3D]$userstartlocation = "9.18277104297157,1.0,-8.98384814917402"
 [Sphere]$ball = [Sphere]::New($sphere,$userstartlocation,1,20,30,"face.jpg",$false,"User",$models,"User")
 #[Sphere]$ball = [Sphere]::New($sphere,-3.5527136788005E-15,-0.333333333333333,-3.5527136788005E-15,1,20,30,"face.jpg",$false,"User",$models,"User")
 [System.Windows.Media.Media3D.Point3D]$opponentstartlocation = "-9.18524945901486,1,9.39554518710787"
@@ -453,25 +401,18 @@ $mainWindow.window.Add_Loaded({
     turnModel -center $sky.origin -modelgroup $sky.GetModelGroup() -beginAngle 0 -endAngle 360 -seconds 960 -forever $true
     [double]$camera.amount = 0.00
     [double]$Camera.amount *= $Camera.Scale
-    #$timer.Start()
-    #[double]$camera.amount = ([double]$camera.amount + 0.08)
     # Need to read into memory this to be able to use later
     $namescope = [System.Windows.Namescope]::SetNameScope($this,[system.windows.NameScope]::new())
     $Global:mythis = $this
     # Set Name Scope and register it with translate transform
     $mythis.RegisterName("UserBall", ($ball.getTranslateTransform()))
     $mythis.RegisterName("OpponentBall", ($opponentball.getTranslateTransform()));
-    
-    # Pitäisi keksiä miten toteuttaa kaikki addtransformit newtransformina ettei tuo transform kasva liian suureksi
-    #$mythis.RegisterName("Camera2", ($camera2.getTranslateTransform()));
-    #Write-Warning ($floorModel | ConvertTo-Json)
 })
 
 #    $MainviewPort.Add_MouseDown({
     $MainViewPort.Add_MouseMove({
         Param ([Object] $sender, [MouseEventArgs]$eventArgs)
         if($MainViewPort.tag -eq "camera"){
-            #Write-Warning ($mainWindow | ConvertTo-Json)
             if($mainWindow.window.WindowState -eq 2){
                 $WindowSizeWidth = $mainWindow.window.ActualWidth
                 $WindowSizeHeight = $mainWindow.window.ActualHeight
@@ -640,12 +581,38 @@ $timer.add_Tick({
             Default{}
         }
     }
+    if($Camera.jump -ne 0.34){
+        [SphereAction] $action = $ball.Intersect($ball,$floorModel)
+<#
+        if((($ball.translateTransform.OffsetY - 1) -le 0)){
+            Write-Warning (($ball.translateTransform.OffsetY - 1) -le 0)
+        }else{            
+            $ball.Jump("0,-1,0", -0.34)
+        }#>
+        Switch ($action){
+            'Collision' {
+                Write-Warning "true"
+            }
+            Default{
+                Write-Warning "false"
+                if(($ball.translateTransform.OffsetY - 0.1) -le 0){
+                } else {
+                    $ball.Jump("0,-0.1,0", -0.1)
+                }
+            }
+        }    
+    }
+    if($Camera.jump -eq 0.34){
+        Write-Warning "yritys on kova"
+        $ball.Jump("0,1.0,0", $camera.jump)
+        $camera.jump = 0.0
+    }    
     # drop the ball if out of ground plate
     if(($ball.GetBoundsOrigin().X -gt 10) -or ($ball.GetBoundsOrigin().X -lt -10) -or ($ball.GetBoundsOrigin().Z -gt 10) -or ($ball.GetBoundsOrigin().Z -lt -10)){
-        $mainWindow.Storyboard($mythis,"UserBall",($ball.GetModelGroup()),($ball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
+        #$mainWindow.Storyboard($mythis,"UserBall",($ball.GetModelGroup()),($ball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
         $MainViewPort.camera = $camera2.camera
-        $Global:disablekeys = $true
-        $timer.Stop()
+#        $Global:disablekeys = $true
+#        $timer.Stop()
     }
     # Get user ball origin and try to move opponent ball there
     # tähän tarvii rakentaa jotain millä hiffaa minne päin pitäisi mennä
@@ -675,12 +642,12 @@ $timer.add_Tick({
             $opponentball.move("$($ball.GetBoundsOrigin().X,0.0,$ball.GetBoundsOrigin().Z)", +($Camera.amount * 0.1))
         }
     }
-    if(($opponentball.GetBoundsOrigin().X -gt 10) -or ($opponentball.GetBoundsOrigin().X -lt -10) -or ($opponentball.GetBoundsOrigin().Z -gt 10) -or ($opponentball.GetBoundsOrigin().Z -lt -10)){
-        $mainWindow.Storyboard($mythis,"OpponentBall",($opponentball.GetModelGroup()),($opponentball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
-        $MainViewPort.camera = $camera2.camera
-        $Global:disablekeys = $true
-        $timer.Stop()
-    }
+#    if(($opponentball.GetBoundsOrigin().X -gt 10) -or ($opponentball.GetBoundsOrigin().X -lt -10) -or ($opponentball.GetBoundsOrigin().Z -gt 10) -or ($opponentball.GetBoundsOrigin().Z -lt -10)){
+#        $mainWindow.Storyboard($mythis,"OpponentBall",($opponentball.GetModelGroup()),($opponentball.getTranslateTransform()),"Drop",0,0,0,0,-1000,0,30);
+#        $MainViewPort.camera = $camera2.camera
+#        $Global:disablekeys = $true
+#        $timer.Stop()
+#    }
 })
 
 
@@ -745,8 +712,7 @@ $window.Add_KeyDown({
                     Break;
                 }
                 'space'{
-                    # $namespace,$modelgroup,$TranslateTransform3D,$action,$fromX,$fromY,$fromZ,$toX,$toY,$toZ,$duration
-                    $mainWindow.Storyboard($mythis,"UserBall",($ball.GetModelGroup()),($ball.getTranslateTransform()),"Jump",0,0,0,0,1.0,0,0.5)
+                    [double]$camera.jump = 0.34
                     Break;
                 }
             }

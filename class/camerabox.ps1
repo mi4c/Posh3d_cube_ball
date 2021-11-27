@@ -1,6 +1,7 @@
 ﻿class CameraBox : System.ComponentModel.INotifyPropertyChanged{
     [int]$speed
     [double]$amount
+    [double]$jump
     [Double]$scale = 1
 	[int]$lookBackAngle
 	[bool]$turnToTarget

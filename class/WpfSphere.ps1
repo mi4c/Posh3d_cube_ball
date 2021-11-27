@@ -33,15 +33,6 @@ Class Sphere{
     [String]$Name
     [String]$Tag
     [System.Windows.Media.Media3D.Vector3D]$lookdirection
-    [Double]$ScaleX
-    [Double]$ScaleY
-    [Double]$ScaleZ
-    [System.Windows.Media.Media3D.Vector3D]$calculation
-    [System.Windows.DependencyProperty]$position
-    [System.Windows.DependencyProperty]$Rotation1Property
-    [System.Windows.DependencyProperty]$Rotation2Property
-    [System.Windows.DependencyProperty]$Rotation3Property
-    [System.Windows.DependencyPropertyChangedEventArgs]$e
 
     [Void] add_PropertyChanged([System.ComponentModel.PropertyChangedEventHandler] $propertyChanged) {
         $this.PropertyChanged = [Delegate]::Combine($this.PropertyChanged, $propertyChanged)
@@ -83,6 +74,10 @@ Class Sphere{
         $this.Definemodel($imagefile,$transparent,$Name,$models,$Tag)
         $this.origin = $sphere.GetBoundsorigin()
         $this.addMotionTransforms()
+        #[System.Windows.DependencyProperty]$this.Position = [System.Windows.DependencyProperty]::Register("Position", [System.Windows.Media.Media3D.Point3D], [System.Windows.Media.Media3D.Point3D], (New-Object System.Windows.UIPropertyMetadata([Math3d]::Origin),(New-Object System.Windows.PropertyChangedCallback($this.OnNewTransform([Sphere]$this, [System.Windows.DependencyPropertyChangedEventArgs]$this.e)))))
+        #[System.Windows.DependencyProperty]$this.Rotation1Property = [System.Windows.DependencyProperty]::Register("Rotation1", [System.Windows.Media.Media3D.Quaternion], [Sphere], (New-Object System.Windows.UIPropertyMetadata([System.Windows.Media.Media3D.Quaternion]::Identity),(New-Object System.Windows.PropertyChangedCallback($this.OnNewTransform([Sphere]$this, [System.Windows.DependencyPropertyChangedEventArgs]$this.e)))))
+        #[System.Windows.DependencyProperty]$this.Rotation2Property = [System.Windows.DependencyProperty]::Register("Rotation2", [System.Windows.Media.Media3D.Quaternion], [Sphere], (New-Object System.Windows.UIPropertyMetadata([System.Windows.Media.Media3D.Quaternion]::Identity),(New-Object System.Windows.PropertyChangedCallback($this.OnNewTransform([Sphere]$this, [System.Windows.DependencyPropertyChangedEventArgs]$this.e)))))
+        #[System.Windows.DependencyProperty]$this.Rotation3Property = [System.Windows.DependencyProperty]::Register("Rotation3", [System.Windows.Media.Media3D.Quaternion], [Sphere], (New-Object System.Windows.UIPropertyMetadata([System.Windows.Media.Media3D.Quaternion]::Identity),(New-Object System.Windows.PropertyChangedCallback($this.OnNewTransform([Sphere]$this, [System.Windows.DependencyPropertyChangedEventArgs]$this.e)))))
     }
     
 
@@ -451,10 +446,17 @@ Class Sphere{
 	}
 
     [Void]Move([System.Windows.Media.Media3D.Vector3D]$direction, [double]$amount){
-        $newTransform = (New-Object System.Windows.Media.Media3D.TranslateTransform3D(($direction*$amount)))
-        $this.SphereModelGroup.Transform.children.children[3].OffsetX += $newTransform.OffsetX
-        $this.SphereModelGroup.Transform.children.children[3].OffsetY += $newTransform.OffsetY
-        $this.SphereModelGroup.Transform.children.children[3].OffsetZ += $newTransform.OffsetZ
+            $newTransform = (New-Object System.Windows.Media.Media3D.TranslateTransform3D(($direction*$amount)))
+            $this.translateTransform.OffsetX += $newTransform.OffsetX
+            $this.translateTransform.OffsetY += $newTransform.OffsetY
+            $this.translateTransform.OffsetZ += $newTransform.OffsetZ
+    }
+
+    [Void]Jump([System.Windows.Media.Media3D.Vector3D]$direction, [double]$amount){
+            #$newTransform = (New-Object System.Windows.Media.Media3D.TranslateTransform3D(($direction*$amount)))
+            $this.translateTransform.OffsetX += $direction.X
+            $this.translateTransform.OffsetY += $direction.Y
+            $this.translateTransform.OffsetZ += $direction.Z
     }
 
     [SphereAction]Intersect($sphere,$object){
@@ -468,7 +470,7 @@ Class Sphere{
         } else {
             $cx = $object.bounds.X + ($object.bounds.SizeX /2)
             $cy = $object.bounds.Y + ($object.bounds.SizeY /2)
-            $cZ = $object.bounds.Y + ($object.bounds.SizeZ /2)
+            $cZ = $object.bounds.Z + ($object.bounds.SizeZ /2)
 
             $x = [Math]::Max(($cx), [Math]::Min($sphere.GetBoundsOrigin().x, ($cx)))
             #Write-Warning ($object | ConvertTo-Json)
@@ -491,6 +493,53 @@ Class Sphere{
         } else {
             Return [SphereAction]::Nothing
         }
+    }
+    [Void]Storyboard($namespace,$MoveTransformString,$action,$toX,$toY,$toZ,$duration){
+        [double]$Totalduration = 0.0
+
+        $newX = $this.translateTransform.OffsetX + $toX
+        $newY = $this.translateTransform.OffsetY + $toY
+        $newZ = $this.translateTransform.OffsetZ + $toZ
+
+        $storyboard = New-Object System.Windows.Media.Animation.StoryBoard
+        $doubleAnimationX1 = New-Object System.Windows.Media.Animation.DoubleAnimation($this.SphereModelGroup.Transform.children.children[3].OffsetX, $newX, ($this.durationTS($duration)))
+        $doubleAnimationY1 = New-Object System.Windows.Media.Animation.DoubleAnimation($this.SphereModelGroup.Transform.children.children[3].OffsetY, $newY, ($this.durationTS($duration)))
+        $doubleAnimationZ1 = New-Object System.Windows.Media.Animation.DoubleAnimation($this.SphereModelGroup.Transform.children.children[3].OffsetZ, $newZ, ($this.durationTS($duration)))
+        $OffsetXProperty = New-Object System.Windows.Media.Media3D.TranslateTransform3D
+        $OffsetYProperty = New-Object System.Windows.Media.Media3D.TranslateTransform3D
+        $OffsetZProperty = New-Object System.Windows.Media.Media3D.TranslateTransform3D
+        
+        [double]$offset = [Scene]::sceneSize * 0.45
+
+        $storyboard::SetTargetName($doubleAnimationX1,$MoveTransformString)
+        $storyboard::SetTargetProperty($doubleAnimationX1, (New-Object System.Windows.PropertyPath($OffsetXProperty::OffsetXProperty)))
+        $storyboard::SetTargetName($doubleAnimationY1,$MoveTransformString)
+        $storyboard::SetTargetProperty($doubleAnimationY1, (New-Object System.Windows.PropertyPath($OffsetYProperty::OffsetYProperty)))
+        $storyboard::SetTargetName($doubleAnimationZ1,$MoveTransformString)
+        $storyboard::SetTargetProperty($doubleAnimationZ1, (New-Object System.Windows.PropertyPath($OffsetZProperty::OffsetZProperty)))
+        $storyboard.Children.Add($doubleAnimationY1)
+        $doubleAnimationY1.BeginTime = ($this.durationTS($totalDuration))
+
+        if($action -eq 'Jump'){
+            $doubleAnimationX2 = New-Object System.Windows.Media.Animation.DoubleAnimation($newX, $this.translateTransform.OffsetX, ($this.durationTS($duration)))
+            $doubleAnimationY2 = New-Object System.Windows.Media.Animation.DoubleAnimation($newY, $this.translateTransform.OffsetY, ($this.durationTS($duration)))
+            $doubleAnimationZ2 = New-Object System.Windows.Media.Animation.DoubleAnimation($newZ, $this.translateTransform.OffsetZ, ($this.durationTS($duration)))
+            $storyboard::SetTargetName($doubleAnimationX2,$MoveTransformString)
+            $storyboard::SetTargetProperty($doubleAnimationX2, (New-Object System.Windows.PropertyPath($OffsetXProperty::OffsetXProperty)))
+            $storyboard::SetTargetName($doubleAnimationY2,$MoveTransformString)
+            $storyboard::SetTargetProperty($doubleAnimationY2, (New-Object System.Windows.PropertyPath($OffsetYProperty::OffsetYProperty)))
+            $storyboard::SetTargetName($doubleAnimationZ2,$MoveTransformString)
+            $storyboard::SetTargetProperty($doubleAnimationZ2, (New-Object System.Windows.PropertyPath($OffsetZProperty::OffsetZProperty)))
+            $storyboard.Children.Add($doubleAnimationX2)
+            $storyboard.Children.Add($doubleAnimationY2)
+            $storyboard.Children.Add($doubleAnimationZ2)
+            $doubleAnimationX2.BeginTime = ($this.durationTS($duration))
+            $doubleAnimationY2.BeginTime = ($this.durationTS($duration))
+            $doubleAnimationZ2.BeginTime = ($this.durationTS($duration))
+        }
+
+        $Storyboard.RepeatBehavior = "1x"
+        $storyboard.Begin($namespace)
     }
 }
 
