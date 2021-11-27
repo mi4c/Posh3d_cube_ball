@@ -348,6 +348,14 @@ $models_check = @{}
 $camera = [CameraBox]::new()
 $camera2 = [CameraBox]::new()
 $camera3 = [CameraBox]::new()
+
+<#
+[System.Windows.DependencyProperty]$Global:PositionProperty = [System.Windows.DependencyProperty]::Register("Position", [System.Windows.Media.Media3D.Point3D], [Sphere], (new-object System.Windows.UIPropertyMetadata(([Sphere]::Position()),(New-Object System.Windows.PropertyChangedCallback([Sphere]::OnNewTransform([Sphere],[System.Windows.DependencyPropertyChangedEventArgs]))))))
+[System.Windows.DependencyProperty]$Global:Rotation1Property = [System.Windows.DependencyProperty]::Register("Rotation1", [System.Windows.Media.Media3D.Quaternion], [Sphere],(new-object System.Windows.UIPropertyMetadata([System.Windows.Media.Media3D.Quaternion]::Identity,(New-Object System.Windows.PropertyChangedCallback([Sphere]::OnNewTransform([Sphere],[System.Windows.DependencyPropertyChangedEventArgs]))))))
+[System.Windows.DependencyProperty]$Global:Rotation2Property = [System.Windows.DependencyProperty]::Register("Rotation2", [System.Windows.Media.Media3D.Quaternion], [Sphere],(new-object System.Windows.UIPropertyMetadata([System.Windows.Media.Media3D.Quaternion]::Identity,(New-Object System.Windows.PropertyChangedCallback([Sphere]::OnNewTransform([Sphere],[System.Windows.DependencyPropertyChangedEventArgs]))))))
+[System.Windows.DependencyProperty]$Global:Rotation3Property = [System.Windows.DependencyProperty]::Register("Rotation3", [System.Windows.Media.Media3D.Quaternion], [Sphere],(new-object System.Windows.UIPropertyMetadata([System.Windows.Media.Media3D.Quaternion]::Identity,(New-Object System.Windows.PropertyChangedCallback([Sphere]::OnNewTransform([Sphere],[System.Windows.DependencyPropertyChangedEventArgs]))))))
+#>
+
 # create a cube with dimensions as some fraction of the scene size
 [WpfCube]$cube = [WpfCube]::new($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize / 6), ([scene]::scenesize / 6), ([scene]::scenesize / 6))
 # construct our geometry model from the cube object
@@ -394,6 +402,7 @@ $skyvisual = New-Object System.Windows.Media.Media3D.ModelVisual3D
 # populate the visual with the geometry model we made
 $visual.Content = $groupScene
 $spherevisual.content = ($ball.GetModelGroup())
+#Write-Warning ($spherevisual.content | ConvertTo-Json)
 $opponentvisual.content = ($opponentball.GetModelGroup())
 $skyvisual.content = ($sky.GetModelGroup())
 $transformGroup = New-Object System.Windows.Media.Media3D.Transform3DGroup;
@@ -458,7 +467,6 @@ $mainWindow.window.Add_Loaded({
     #Write-Warning ($floorModel | ConvertTo-Json)
 })
 
-
 #    $MainviewPort.Add_MouseDown({
     $MainViewPort.Add_MouseMove({
         Param ([Object] $sender, [MouseEventArgs]$eventArgs)
@@ -488,28 +496,32 @@ $mainWindow.window.Add_Loaded({
                     $direction = "Left"
                     [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
                     $Camera.Rotate($axis,$xfactor,$Camera.position())
-                    $ball.MouseRotateX($xfactor,$direction)
-                    $ball.lookdirection = $Camera.camera.lookdirection
+                    $Camera3.Rotate($axis,$xfactor,$Camera.position())
+                    $ball.RotateX($xfactor)
+                    #$ball.lookdirection = $Camera.camera.lookdirection
                 }
                 elseif((($mainWindow.window.content.ActualWidth / 2) -lt $eventArgs.GetPosition($this).X) -and ($mainWindow.window.content.ActualWidth / 2) -ne $eventArgs.GetPosition($this).X){
                     $direction = "Right"
                     [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, -1, 0)
                     $Camera.Rotate($axis,$xfactor,$Camera.position())
-                    $ball.MouseRotateX($xfactor,$direction)
-                    $ball.lookdirection = $Camera.camera.lookdirection
+                    $Camera3.Rotate($axis,$xfactor,$Camera.position())
+                    $ball.RotateX(-$xfactor)
+                    #$ball.lookdirection = $Camera.camera.lookdirection
                 }
                 #Y
                 if(((($mainWindow.window.content.ActualHeight / 2)-11.5) -gt $eventArgs.GetPosition($this).Y) -and (($mainWindow.window.content.ActualHeight / 2)-11.5) -ne $eventArgs.GetPosition($this).Y){
                     $direction = "Up"
                     $Camera.ChangePitch($yfactor)
-                    $ball.MouseRotateY($yfactor,$direction)
-                    $ball.lookdirection = $Camera.camera.lookdirection
+                    $ball.RotateY($xfactor)
+                    #$ball.MouseRotateY($yfactor,$direction)
+                    #$ball.lookdirection = $Camera.camera.lookdirection
                 } 
                 elseif(((($mainWindow.window.content.ActualHeight / 2)-11.5) -lt $eventArgs.GetPosition($this).Y) -and (($mainWindow.window.content.ActualHeight / 2)-11.5) -ne $eventArgs.GetPosition($this).Y){
                     $direction = "Down"
                     $Camera.ChangePitch(-$yfactor)
-                    $ball.MouseRotateY($yfactor,$direction)
-                    $ball.lookdirection = $Camera.camera.lookdirection
+                    $ball.RotateY(-$xfactor)
+                    #$ball.MouseRotateY($yfactor,$direction)
+                    #$ball.lookdirection = $Camera.camera.lookdirection
                 }
             } else {
                 # FULL SCREEN
@@ -520,14 +532,14 @@ $mainWindow.window.Add_Loaded({
                     $direction = "Left"
                     [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
                     $Camera.Rotate($axis,$xfactor,$Camera.position())
-                    $ball.MouseRotateX($xfactor,$direction)
+                    $ball.RotateX($xfactor)
                     $ball.lookdirection = $Camera.camera.lookdirection
                 } 
                 elseif((($mainWindow.window.ActualWidth / 2) -lt $eventArgs.GetPosition($this).X) -and ($mainWindow.window.ActualWidth / 2) -ne $eventArgs.GetPosition($this).X){
                     $direction = "Right"
                     [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, -1, 0)
                     $Camera.Rotate($axis,$xfactor,$Camera.position())
-                    $ball.MouseRotateX($xfactor,$direction)
+                    $ball.RotateX(-$xfactor)
                     $ball.lookdirection = $Camera.camera.lookdirection
                 }
                 #Y
@@ -579,6 +591,20 @@ $mainWindow.window.Add_Loaded({
 #Function TimerTick([object]$sender, [EventArgs]$e){}
 $timer.Tag = [SphereAction]::Nothing
 $timer.add_Tick({
+	if($Camera.MovingUpDirectionIsLocked -eq $true){
+        $camera.Move($camera3.camera.LookDirection, +$camera.amount)
+        $ball.Move("$($camera3.camera.LookDirection.X),$($camera3.camera.LookDirection.Y),$($camera3.camera.LookDirection.Z)", +$camera.amount)
+        $camera3.Move($camera.camera.LookDirection, +$camera.amount)
+    }
+    elseif($Camera.MovingDownDirectionIsLocked -eq $true){
+        $camera.Move($camera3.camera.LookDirection, -$camera.amount)
+        $inverseX = [double]$camera3.camera.LookDirection.X * -1
+        $inverseY = [double]$camera3.camera.LookDirection.Y * -1
+        $inverseZ = [double]$camera3.camera.LookDirection.Z * -1
+        $ball.Move("$inverseX,$inverseY,$inverseZ", +$camera.amount)
+        $camera3.Move($camera3.camera.LookDirection, -$camera.amount)
+    }
+<#
     if($timer -ne $null){
         $timer.Stop()
         $timer.Start()
@@ -586,7 +612,7 @@ $timer.add_Tick({
     # here need to change the way how moving is done, with a too fast timer powershell crashes quite fast	    
     if($Camera.MovingUpDirectionIsLocked -eq $true){
         $camera.Move($camera.camera.lookdirection, +$camera.amount)
-        $ball.Move("$($ball.lookdirection.X),$($ball.lookdirection.Y),$($ball.lookdirection.Z)", +$camera.amount)
+        $ball.Move("$(($camera.camera.lookdirection.X * -1) + $ball.origin.X),$(($camera.camera.lookdirection.Y * -1) + $ball.origin.Y),$(($camera.camera.lookdirection.Z * -1) + $ball.origin.Z)", +$camera.amount)
         #Write-Warning "$(($camera.camera.LookDirection.X),$($camera.camera.LookDirection.Y),$($camera.camera.LookDirection.Z), +$camera.amount)"
         [SphereAction] $action = $ball.Intersect($ball,$opponentball)
         Switch ($action){
@@ -680,7 +706,7 @@ $timer.add_Tick({
 #        $Global:disablekeys = $true
 #        $timer.Stop()
 #    }
-
+#>
 })
 
 
@@ -731,8 +757,8 @@ $window.Add_KeyDown({
                     [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
                     $direction = "Left"
                     $Camera.Rotate($axis,$xfactor,$Camera.position())
-                    $ball.MouseRotateX($xfactor,$direction)
-                    $ball.lookdirection = $Camera.camera.lookdirection
+                    $Camera3.Rotate($axis,$xfactor,$Camera.position())
+                    $ball.RotateX($xfactor)
                     Break;
                 }
                 'Right'{
@@ -740,8 +766,8 @@ $window.Add_KeyDown({
                     [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, -1, 0)
                     $direction = "Right"
                     $Camera.Rotate($axis,$xfactor,$Camera.position())
-                    $ball.MouseRotateX($xfactor,$direction)
-                    $ball.lookdirection = $Camera.camera.lookdirection
+                    $Camera3.Rotate($axis,$xfactor,$Camera.position())
+                    $ball.RotateX(-$xfactor)
                     Break;
                 }
                 'space'{

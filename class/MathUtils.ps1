@@ -133,6 +133,9 @@ class Math3D {
 
     Math3D(){}
 
+    [System.Windows.Media.Media3D.Point3D]GetOrigin(){
+        Return $this.Origin
+    }
 
 	static [Double]Distance([System.Windows.Media.Media3D.Point3D]$pt)
 	{        

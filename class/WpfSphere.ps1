@@ -25,12 +25,23 @@ Class Sphere{
     [int]$starttheta
     [Bool]$outofscope
 #    [System.Windows.Media.Media3D.Vector3D]$axis
-    [System.Windows.Media.Media3D.RotateTransform3D]$rotateTransform
-    [System.Windows.Media.Media3D.TranslateTransform3D]$translateTransform
     [System.Windows.Media.Media3D.Model3DGroup]$SphereModelGroup
+    [System.Windows.Media.Media3D.RotateTransform3D]$rotateTransformX
+    [System.Windows.Media.Media3D.RotateTransform3D]$rotateTransformY
+    [System.Windows.Media.Media3D.RotateTransform3D]$rotateTransformZ
+    [System.Windows.Media.Media3D.TranslateTransform3D]$translateTransform
     [String]$Name
     [String]$Tag
     [System.Windows.Media.Media3D.Vector3D]$lookdirection
+    [Double]$ScaleX
+    [Double]$ScaleY
+    [Double]$ScaleZ
+    [System.Windows.Media.Media3D.Vector3D]$calculation
+    [System.Windows.DependencyProperty]$position
+    [System.Windows.DependencyProperty]$Rotation1Property
+    [System.Windows.DependencyProperty]$Rotation2Property
+    [System.Windows.DependencyProperty]$Rotation3Property
+    [System.Windows.DependencyPropertyChangedEventArgs]$e
 
     [Void] add_PropertyChanged([System.ComponentModel.PropertyChangedEventHandler] $propertyChanged) {
         $this.PropertyChanged = [Delegate]::Combine($this.PropertyChanged, $propertyChanged)
@@ -73,7 +84,7 @@ Class Sphere{
         $this.origin = $sphere.GetBoundsorigin()
         $this.addMotionTransforms()
     }
-
+    
 
     [void]AddSphere([System.Windows.Media.Media3D.MeshGeometry3D]$mesh, [System.Windows.Media.Media3D.Point3D]$center, [double]$radius, [int]$num_phi, [int]$num_theta)
     {
@@ -194,7 +205,7 @@ Class Sphere{
             if($transparent){
                 $new_model.BackMaterial = $globe_BackMaterial
             }
-            $models.Add($new_model,@{Name = $Name; Tag = $Tag})
+            $models.Add($new_model,@{Name = $Name; Tag = $Tag;})
             $model_group.Children.Add($new_model)
         }
         [Double]$dphi = ([Math]::PI / $num_phi);
@@ -341,14 +352,71 @@ Class Sphere{
         return $c;
     }
 
+
+	[Void]OnNewTransform([Sphere]$sender, [System.Windows.DependencyPropertyChangedEventArgs]$e)
+	{
+		[Sphere]$obj = $sender -as [Sphere];
+		$obj.NewTransform();
+	}
+
+	#endregion DependencyProperties
+
+	[void]NewTransform(){
+		[System.Windows.Media.Media3D.Matrix3D]$m = New-Object System.Windows.Media.Media3D.Matrix3D
+		#$m.Scale(new-object System.Windows.Media.Media3D.Vector3D("$($this.ScaleX), $($this.ScaleY), $($this.ScaleZ)"));
+        if($this.Rotation1){
+    		$m.Rotate($this.Rotation1);
+        }
+        if($this.Rotation2){
+		    $m.Rotate($this.Rotation2);
+        }
+        if($this.position){
+		    $m.Translate((new-object System.Windows.Media.Media3D.Vector3D($this.Position.X, $this.Position.Y, $this.Position.Z)));
+        }
+        if($this.Rotation3){
+		    $m.Rotate($this.Rotation3);
+        }
+		$this.SphereModelGroup.Transform = New-Object System.Windows.Media.Media3D.MatrixTransform3D($m);        
+	}
+
+    [System.Windows.Media.Media3D.Vector3D]LeftDirection($camera){
+        Try{
+            $result = [System.Windows.Media.Media3D.Vector3D]::CrossProduct($camera.UpDirection(),($camera.LookDirection()))
+        } Catch {
+            $result = "Error"
+        }
+        Return $result
+    }
+
+    [System.Windows.Media.Media3D.Point3D]Position(){
+        Return $this.GetOrigin()
+    }
+
+    [System.Windows.Media.Media3D.Point3D]Position($PositionProperty,$value){
+        Return ($this.PositionProperty($PositionProperty,$value))
+    }
+
     [void]addMotionTransforms()
     {
-        [System.Windows.Media.Media3D.Vector3D]$vector = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0);
-        [System.Windows.Media.Media3D.AxisAngleRotation3D]$rotation = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($vector, 0.0);
-        $this.rotateTransform = New-Object System.Windows.Media.Media3D.RotateTransform3D($rotation, ($this.GetBoundsorigin()));
-        $this.addTransform($this.SphereModelGroup, $this.rotateTransform);
+        [System.Windows.Media.Media3D.Transform3DGroup]$group = New-Object System.Windows.Media.Media3D.Transform3DGroup
+        [System.Windows.Media.Media3D.Vector3D]$vectorX = New-Object System.Windows.Media.Media3D.Vector3D(1, 0, 0);
+        [System.Windows.Media.Media3D.AxisAngleRotation3D]$rotationX = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($vectorX, 0.0);
+        $this.rotateTransformX = New-Object System.Windows.Media.Media3D.RotateTransform3D($rotationX, ($this.GetBoundsorigin()));
+        $group.Children.Add($this.rotateTransformX)
+        #$this.addTransform($this.SphereModelGroup, $this.rotateTransformX);
+        [System.Windows.Media.Media3D.Vector3D]$vectorY = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0);
+        [System.Windows.Media.Media3D.AxisAngleRotation3D]$rotationY = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($vectorY, 0.0);
+        $this.rotateTransformY = New-Object System.Windows.Media.Media3D.RotateTransform3D($rotationY, ($this.GetBoundsorigin()));
+        $group.Children.Add($this.rotateTransformY)
+        #$this.addTransform($this.SphereModelGroup, $this.rotateTransformY);
+        [System.Windows.Media.Media3D.Vector3D]$vectorZ = New-Object System.Windows.Media.Media3D.Vector3D(0, 0, 1);
+        [System.Windows.Media.Media3D.AxisAngleRotation3D]$rotationZ = New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($vectorZ, 0.0);
+        $this.rotateTransformZ = New-Object System.Windows.Media.Media3D.RotateTransform3D($rotationZ, ($this.GetBoundsorigin()));
+        $group.Children.Add($this.rotateTransformZ)
+        #$this.addTransform($this.SphereModelGroup, $this.rotateTransformZ);
         $this.translateTransform = New-Object System.Windows.Media.Media3D.TranslateTransform3D(0, 0, 0);
-        $this.addTransform($this.SphereModelGroup, $this.translateTransform);
+        $group.Children.Add($this.translateTransform)
+        $this.addTransform($this.SphereModelGroup, $group);
     }
     [void]addTransform([System.Windows.Media.Media3D.Model3DGroup]$model, [System.Windows.Media.Media3D.Transform3D]$transform)
     {
@@ -362,7 +430,6 @@ Class Sphere{
             elseif ($model.Transform -is [System.Windows.Media.Media3D.Transform3DGroup])
             {
                 # T‰t‰ tarvitaan, jos tehd‰‰n esim. pallolle animoidut k‰det :D, ent‰ jalat? - ei palloilla ole jalkoja dummy...
-                # this will be needed if I create ball some animated hands, or eyes etc...
                 [System.Windows.Media.Media3D.Transform3DGroup]$g = $this.SphereModelGroup($model.Transform)
                 foreach ($t in $g.Children)
                 {
@@ -371,159 +438,23 @@ Class Sphere{
             }
         }
         $group.Children.Add($transform);
-        $model.Transform = $transform;
+        $group.Children.Add((New-Object System.Windows.Media.Media3D.TranslateTransform3D))
+        $model.Transform = $group;
     }
 
-	[void]MouseRotateX([double]$angle, $direction){
-        Switch($direction){
-            "Left"{
-                if($this.Transform.Rotation){
-                    if((($this.Transform.Rotation.Angle - $($angle)) -lt 0) -and -not($this.Transform.Rotation.Angle + $($angle) -ge 0)){
-                        $this.outofScope = $true
-                    }
-                    elseif((($this.Transform.Rotation.Angle - $($angle)) -ge 0) -and -not(($this.Transform.Rotation.Angle + $($angle)) -lt 0)){
-                        $this.outofScope = $true
-                    }
-                     else {
-                        $this.outofScope = $true
-                    }
-                } else {
-                    $this.outofscope = $false
-                }
-                break;
-            }
-            "Right"{
-                if($this.Transform.Rotation){
-                    if((($this.Transform.Rotation.Angle + $($angle)) -ge 0) -and -not(($this.Transform.Rotation.Angle - $($angle)) -lt 0)){
-                        $this.outofScope = $false
-                    }
-                    elseif((($this.Transform.Rotation.Angle - $($angle)) -lt 0) -and -not(($this.Transform.Rotation.Angle + $($angle)) -ge 0)){
-                        $this.outofScope = $false
-                    }
-                     else {
-                        $this.outofScope = $false
-                    }
-                } else {
-                    $this.outofscope = $true
-                }
-                break;
-            }
-        }
-        if(-not $this.outofScope){
-            # Vertical axis of camera with Horizontal axis
-            [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
-            $axis.Y = (-$axis.Y + $this.SphereModelGroup.Transform.Rotation.axis.Y)
-            $angle = ($this.SphereModelGroup.Transform.Rotation.Angle - $($angle))
-        }
-        elseif($this.outofScope){
-            # Reverse Vertical axis of camera with Horizontal axis
-            [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, -1, 0)
-            $axis.Y = ($axis.Y + $this.SphereModelGroup.Transform.Rotation.axis.Y)
-            $angle = ($this.SphereModelGroup.Transform.Rotation.Angle + $($angle))
-        }
-        if($axis){
-            $this.SphereModelGroup.Transform = (New-Object System.Windows.Media.Media3D.RotateTransform3D(New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($axis,$angle)))
-            $this.SphereModelGroup.Transform.CenterX = $this.position().X
-            $this.SphereModelGroup.Transform.CenterY = $this.position().Y
-            $this.SphereModelGroup.Transform.CenterZ = $this.position().Z
-        }
-	}
-	[void]MouseRotateY([double]$angle, $direction){
-        Switch($direction){
-            "Up"{
-                if($this.Transform.Rotation){
-                    if((($this.Transform.Rotation.Angle + $($angle)) -ge 0) -and -not(($this.Transform.Rotation.Angle - $($angle)) -lt 0)){
-                        $this.outofScope = $false
-                    }
-                    elseif((($this.Transform.Rotation.Angle - $($angle)) -lt 0) -and -not(($this.Transform.Rotation.Angle + $($angle)) -ge 0)){
-                        $this.outofScope = $false
-                    }
-                     else {
-                        $this.outofScope = $false
-                    }
-                } else {
-                    $this.outofscope = $true
-                }
-                break;
-            }
-            "Down"{
-                if($this.Transform.Rotation){
-                    if((($this.Transform.Rotation.Angle - $($angle)) -lt 0) -and -not($this.Transform.Rotation.Angle + $($angle) -ge 0)){
-                        $this.outofScope = $true
-                    }
-                    elseif((($this.Transform.Rotation.Angle - $($angle)) -ge 0) -and -not(($this.Transform.Rotation.Angle + $($angle)) -lt 0)){
-                        $this.outofScope = $true
-                    }
-                     else {
-                        $this.outofScope = $true
-                    }
-                } else {
-                    $this.outofscope = $false
-                }
-                break;
-            }
-        }
-        if(-not $this.outofScope){
-            # Vertical axis of camera with Horizontal axis
-            [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0,0,1)
-            $axis.Z = ($axis.Z + $this.SphereModelGroup.Transform.Rotation.axis.Z)
-            $angle = ($this.SphereModelGroup.Transform.Rotation.Angle - $($angle))
-        }
-        elseif($this.outofScope){
-            # Reverse Vertical axis of camera with Horizontal axis
-            [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0,0,-1)
-            $axis.Z = ($axis.Z + $this.SphereModelGroup.Transform.Rotation.axis.Z)
-            $angle = ($this.SphereModelGroup.Transform.Rotation.Angle + $($angle))
-        }
-
-        if($axis){
-            $this.SphereModelGroup.Transform  = (New-Object System.Windows.Media.Media3D.RotateTransform3D(New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($axis,$angle)))
-            $this.SphereModelGroup.Transform.CenterX = $this.position().X
-            $this.SphereModelGroup.Transform.CenterY = $this.position().Y
-            $this.SphereModelGroup.Transform.CenterZ = $this.position().Z
-        }
+	[void]RotateX([double]$angle){
+        $this.SphereModelGroup.Transform.children.children[1].rotation.angle += $angle
 	}
 
-    [System.Windows.Media.Media3D.Vector3D]LeftDirection($camera){
-        Try{
-            $result = [System.Windows.Media.Media3D.Vector3D]::CrossProduct($camera.UpDirection(),($camera.LookDirection()))
-        } Catch {
-            $result = "Error"
-        }
-        Return $result
-    }
-
-	[void]ChangePitch([double]$angle,$camera,$direction)
-	{
-		[System.Windows.Media.Media3D.Quaternion]$q = [Math3D]::Rotation($this.LeftDirection($camera), $angle);
-		$this.LookDirection = [Math3D]::Transform($q,$camera.LookDirection());
-        $this.MouseRotateY($angle, $direction)
+	[void]RotateY([double]$angle){
+        $this.SphereModelGroup.Transform.children.children[2].rotation.angle += $angle
 	}
-
-    [System.Windows.Media.Media3D.Point3D]Position(){
-        Return $this.GetOrigin()
-    }
-    # TODO: how to register these dependecy properties?
-    #static [System.Windows.DependencyProperty]$PositionProperty = [System.Windows.DependencyProperty]::Register("Position", [System.Windows.Media.Media3D.Point3D], [Sphere], (new-object System.Windows.UIPropertyMetadata(([Sphere]::),(New-Object System.Windows.PropertyChangedCallback([Sphere]::OnNewTransform)))))
-
-	[void]Rotate([System.Windows.Media.Media3D.Vector3D]$axis, [double]$angle, [System.Windows.Media.Media3D.Point3D]$center,$direction){
-        $axis.Z = ($axis.Z + $this.SphereModelGroup.Transform.Rotation.axis.Z)
-        $angle = ($this.SphereModelGroup.Transform.Rotation.Angle - $($angle))
-		$this.SphereModelGroup.Transform  = (New-Object System.Windows.Media.Media3D.RotateTransform3D(New-Object System.Windows.Media.Media3D.AxisAngleRotation3D($axis,$angle)))
-        $this.SphereModelGroup.Transform.CenterX = $center.X
-        $this.SphereModelGroup.Transform.CenterY = $center.Y
-        $this.SphereModelGroup.Transform.CenterZ = $center.Z
-        $this.lookdirection.X = $center.X
-        $this.lookdirection.Y = $center.Y
-        $this.lookdirection.Z = $center.Z
-	}
-
 
     [Void]Move([System.Windows.Media.Media3D.Vector3D]$direction, [double]$amount){
-        $this.translateTransform = New-Object System.Windows.Media.Media3D.TranslateTransform3D(($direction*$amount))
-        #($this.translateTransform | ConvertTo-Json) | Out-File .\translate.json -Force
-        #($this.SphereModelGroup.Transform | ConvertTo-Json) | Out-File .\spheremodeltransform.json -Force
-        $this.SphereModelGroup.Transform = $this.translateTransform
+        $newTransform = (New-Object System.Windows.Media.Media3D.TranslateTransform3D(($direction*$amount)))
+        $this.SphereModelGroup.Transform.children.children[3].OffsetX += $newTransform.OffsetX
+        $this.SphereModelGroup.Transform.children.children[3].OffsetY += $newTransform.OffsetY
+        $this.SphereModelGroup.Transform.children.children[3].OffsetZ += $newTransform.OffsetZ
     }
 
     [SphereAction]Intersect($sphere,$object){
