@@ -780,7 +780,7 @@ $window.Add_KeyDown({
         Switch ($eventArgs.key){
             'w'{
                 $direction = "up"
-                $camera.Position(0.0,1)
+                $camera2.PositionFlyCamera($camera2.FlyCameraPhi,$flyCameraDPhi,$direction)
                 Break;
             }
             's'{
@@ -789,13 +789,13 @@ $window.Add_KeyDown({
                 Break;
             }
             'a'{
-                $direction = "Left"
-                $camera.MouseRotateX($xfactor,$direction)
+                $direction = "left"
+                $camera2.PositionFlyCamera($camera2.FlyCameraTheta,$FlyCameraDTheta,$direction)
                 Break;
             }
             'd'{
-                $direction = "Right"
-                $camera.MouseRotateX($xfactor,$direction)
+                $direction = "right"
+                $camera2.PositionFlyCamera($camera2.FlyCameraTheta,$FlyCameraDTheta,$direction)
                 Break;
             }
             'r'{
@@ -810,12 +810,12 @@ $window.Add_KeyDown({
             }
             't'{
                 [double]$turnamount = 5
-                $Camera3.ChangePitch($turnamount)
+                $Camera.ChangePitch($turnamount)
                 Break;
             }
             'g'{
                 [double]$turnamount = 5
-                $Camera3.ChangePitch(-$turnamount)
+                $Camera.ChangePitch(-$turnamount)
                 Break;
             }
             'y'{
