@@ -2,6 +2,7 @@
     [int]$speed
     [double]$amount
     [double]$jump
+    [double]$crouch
     [Double]$scale = 1
 	[int]$lookBackAngle
 	[bool]$turnToTarget

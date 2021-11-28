@@ -8,9 +8,10 @@ Enum SphereDirection {
 Enum SphereAction {
     Nothing
     Collision
+    Drop
 }
 
-Class Sphere{
+Class Sphere : System.ComponentModel.INotifyPropertyChanged{
     [System.Windows.Media.Media3D.Point3D]$origin
     [Double]$width
     [Double]$height
@@ -74,10 +75,6 @@ Class Sphere{
         $this.Definemodel($imagefile,$transparent,$Name,$models,$Tag)
         $this.origin = $sphere.GetBoundsorigin()
         $this.addMotionTransforms()
-        #[System.Windows.DependencyProperty]$this.Position = [System.Windows.DependencyProperty]::Register("Position", [System.Windows.Media.Media3D.Point3D], [System.Windows.Media.Media3D.Point3D], (New-Object System.Windows.UIPropertyMetadata([Math3d]::Origin),(New-Object System.Windows.PropertyChangedCallback($this.OnNewTransform([Sphere]$this, [System.Windows.DependencyPropertyChangedEventArgs]$this.e)))))
-        #[System.Windows.DependencyProperty]$this.Rotation1Property = [System.Windows.DependencyProperty]::Register("Rotation1", [System.Windows.Media.Media3D.Quaternion], [Sphere], (New-Object System.Windows.UIPropertyMetadata([System.Windows.Media.Media3D.Quaternion]::Identity),(New-Object System.Windows.PropertyChangedCallback($this.OnNewTransform([Sphere]$this, [System.Windows.DependencyPropertyChangedEventArgs]$this.e)))))
-        #[System.Windows.DependencyProperty]$this.Rotation2Property = [System.Windows.DependencyProperty]::Register("Rotation2", [System.Windows.Media.Media3D.Quaternion], [Sphere], (New-Object System.Windows.UIPropertyMetadata([System.Windows.Media.Media3D.Quaternion]::Identity),(New-Object System.Windows.PropertyChangedCallback($this.OnNewTransform([Sphere]$this, [System.Windows.DependencyPropertyChangedEventArgs]$this.e)))))
-        #[System.Windows.DependencyProperty]$this.Rotation3Property = [System.Windows.DependencyProperty]::Register("Rotation3", [System.Windows.Media.Media3D.Quaternion], [Sphere], (New-Object System.Windows.UIPropertyMetadata([System.Windows.Media.Media3D.Quaternion]::Identity),(New-Object System.Windows.PropertyChangedCallback($this.OnNewTransform([Sphere]$this, [System.Windows.DependencyPropertyChangedEventArgs]$this.e)))))
     }
     
 
@@ -188,7 +185,6 @@ Class Sphere{
         }
     }
     # Make a sphere.
-#    static MakeSphere([System.Windows.Media.Media3D.MeshGeometry3D]$sphere_mesh, [System.Windows.Media.Media3D.Material]$sphere_material,
     Static MakeSphere([System.Windows.Media.Media3D.Model3DGroup]$model_group, [System.Windows.Media.Media3D.MeshGeometry3D]$sphere_mesh, [System.Windows.Media.Media3D.Material]$sphere_material,
         [Double]$radius, [Double]$cx, [Double]$cy, [Double]$cz, [Int]$num_phi, [Int]$num_theta, [System.Windows.Media.Media3D.Material]$globe_BackMaterial, [Bool]$transparent, [String]$Name,$models,[String]$Tag)
     {
@@ -454,26 +450,32 @@ Class Sphere{
 
     [Void]Jump([System.Windows.Media.Media3D.Vector3D]$direction, [double]$amount){
             #$newTransform = (New-Object System.Windows.Media.Media3D.TranslateTransform3D(($direction*$amount)))
-            $this.translateTransform.OffsetX += $direction.X
-            $this.translateTransform.OffsetY += $direction.Y
-            $this.translateTransform.OffsetZ += $direction.Z
+            $this.translateTransform.OffsetX += $direction.X*$amount
+            $this.translateTransform.OffsetY += $direction.Y*$amount
+            $this.translateTransform.OffsetZ += $direction.Z*$amount
     }
 
-    [SphereAction]Intersect($sphere,$object){
-        if($object.startradius){
-            $x = [Math]::Max($object.GetBoundsOrigin().X, [Math]::Min($sphere.GetBoundsOrigin().x, $object.GetBoundsOrigin().X))
-            $y = [Math]::Max($object.GetBoundsOrigin().Y, [Math]::Min($sphere.GetBoundsOrigin().y, $object.GetBoundsOrigin().Y))
-            $z = [Math]::Max($object.GetBoundsOrigin().Z, [Math]::Min($sphere.GetBoundsOrigin().z, $object.GetBoundsOrigin().Z))
+    [Void]Crouch([System.Windows.Media.Media3D.Vector3D]$direction, [double]$amount){
+            #$newTransform = (New-Object System.Windows.Media.Media3D.TranslateTransform3D(($direction*$amount)))
+            $this.translateTransform.OffsetX += $direction.X*$amount
+            $this.translateTransform.OffsetY += $direction.Y*$amount
+            $this.translateTransform.OffsetZ += $direction.Z*$amount
+    }
+
+    [SphereAction]Intersect($sphere,$myobject){
+        if($myobject.startradius){
+            $x = [Math]::Max($myobject.GetBoundsOrigin().X, [Math]::Min($sphere.GetBoundsOrigin().x, $myobject.GetBoundsOrigin().X))
+            $y = [Math]::Max($myobject.GetBoundsOrigin().Y, [Math]::Min($sphere.GetBoundsOrigin().y, $myobject.GetBoundsOrigin().Y))
+            $z = [Math]::Max($myobject.GetBoundsOrigin().Z, [Math]::Min($sphere.GetBoundsOrigin().z, $myobject.GetBoundsOrigin().Z))
             $distance = [Math]::Sqrt(($x - $sphere.GetBoundsOrigin().x) * ($x - $sphere.GetBoundsOrigin().x) +
                                         ($y - $sphere.GetBoundsOrigin().y) * ($y - $sphere.GetBoundsOrigin().y) +
                                         ($z - $sphere.GetBoundsOrigin().z) * ($z - $sphere.GetBoundsOrigin().z))
         } else {
-            $cx = $object.bounds.X + ($object.bounds.SizeX /2)
-            $cy = $object.bounds.Y + ($object.bounds.SizeY /2)
-            $cZ = $object.bounds.Z + ($object.bounds.SizeZ /2)
+            $cx = $myobject.bounds.X + ($myobject.bounds.SizeX /2)
+            $cy = $myobject.bounds.Y + ($myobject.bounds.SizeY /2)
+            $cZ = $myobject.bounds.Z + ($myobject.bounds.SizeZ /2)
 
             $x = [Math]::Max(($cx), [Math]::Min($sphere.GetBoundsOrigin().x, ($cx)))
-            #Write-Warning ($object | ConvertTo-Json)
             $y = [Math]::Max(($cy), [Math]::Min($sphere.GetBoundsOrigin().y, ($cy)))
             $z = [Math]::Max(($cz), [Math]::Min($sphere.GetBoundsOrigin().z, ($cz)))
             $distance = [Math]::Sqrt(($x - $sphere.GetBoundsOrigin().x) * ($x - $sphere.GetBoundsOrigin().x) +
@@ -481,17 +483,44 @@ Class Sphere{
                                         ($z - $sphere.GetBoundsOrigin().z) * ($z - $sphere.GetBoundsOrigin().z))
         }
 
-        if($distance -lt ($sphere.startradius + ($object.bounds.SizeX /2))){
-            Return [SphereAction]::Collision
+        if($distance -le ($sphere.startradius + ($myobject.bounds.SizeX /2))){
+                if((($sphere.GetBoundsOrigin().X + $this.width*4) -ge $myobject.bounds.X) -and (($sphere.GetBoundsOrigin().X - $this.width*4) -le ($myobject.bounds.X + $myobject.bounds.SizeX)) -and
+                    (($sphere.GetBoundsOrigin().Y + $this.height *4) -ge $myobject.bounds.Y) -and (($sphere.GetBoundsOrigin().Y - ($this.height*4)) -le ($myobject.bounds.Y + $myobject.bounds.SizeY)) -and
+                    (($sphere.GetBoundsOrigin().Z + $this.width*4) -ge $myobject.bounds.Z) -and (($sphere.GetBoundsOrigin().Z - ($this.width*4)) -le ($myobject.bounds.Z + $myobject.bounds.SizeZ))
+                ){
+                    Return [SphereAction]::Collision
+                } else {
+                    if((($sphere.GetBoundsOrigin().X + $this.width*4) -ge $myobject.bounds.X) -and (($sphere.GetBoundsOrigin().X - $this.width*4) -le ($myobject.bounds.X + $myobject.bounds.SizeX)) -and
+                        (($sphere.GetBoundsOrigin().Z + $this.width*4) -ge $myobject.bounds.Z) -and (($sphere.GetBoundsOrigin().Z - ($this.width*4)) -le ($myobject.bounds.Z + $myobject.bounds.SizeZ))
+                    ){
+                        Return [SphereAction]::Nothing
+                    } else {
+                        Return [SphereAction]::Drop
+                    }
+                }
         }
-        elseif($object.startradius){
-            if($distance -lt (($sphere.startradius) + ($object.startradius))){
+        elseif($myobject.startradius){
+            if($distance -lt (($sphere.startradius) + ($myobject.startradius))){
                 Return [SphereAction]::Collision
             } else {
                 Return [SphereAction]::Nothing
             }
-        } else {
-            Return [SphereAction]::Nothing
+        } 
+        else {
+            if((($sphere.GetBoundsOrigin().X + $this.width*4) -ge $myobject.bounds.X) -and (($sphere.GetBoundsOrigin().X - $this.width*4) -le ($myobject.bounds.X + $myobject.bounds.SizeX)) -and
+                (($sphere.GetBoundsOrigin().Y + $this.height *4) -ge $myobject.bounds.Y) -and (($sphere.GetBoundsOrigin().Y - ($this.height*4)) -le ($myobject.bounds.Y + $myobject.bounds.SizeY)) -and
+                (($sphere.GetBoundsOrigin().Z + $this.width*4) -ge $myobject.bounds.Z) -and (($sphere.GetBoundsOrigin().Z - ($this.width*4)) -le ($myobject.bounds.Z + $myobject.bounds.SizeZ))
+            ){
+                Return [SphereAction]::Collision
+            } else {
+                if((($sphere.GetBoundsOrigin().X + $this.width*4) -ge $myobject.bounds.X) -and (($sphere.GetBoundsOrigin().X - $this.width*4) -le ($myobject.bounds.X + $myobject.bounds.SizeX)) -and
+                    (($sphere.GetBoundsOrigin().Z + $this.width*4) -ge $myobject.bounds.Z) -and (($sphere.GetBoundsOrigin().Z - ($this.width*4)) -le ($myobject.bounds.Z + $myobject.bounds.SizeZ))
+                ){
+                    Return [SphereAction]::Nothing
+                } else {
+                    Return [SphereAction]::Drop
+                }
+            }
         }
     }
     [Void]Storyboard($namespace,$MoveTransformString,$action,$toX,$toY,$toZ,$duration){

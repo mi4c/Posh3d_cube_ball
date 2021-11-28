@@ -19,7 +19,7 @@ zoomin/out skycam keys r,f
 
 Change camera view num keys 1,2,3
 
-Ball intersect not accurate and does not work as I intended
+Ball intersect not accurate and does not work as I intended, so added some more logic to that.
 
 ![fun1](/Screenshots/fun1.PNG)
 ![fun2](/Screenshots/fun2.PNG)

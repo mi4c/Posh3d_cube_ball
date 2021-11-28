@@ -23,10 +23,11 @@
         $this.depth = $d
         $this.origin = $P0
     }
-    WpfCube([WpfCube]$cube){
+    WpfCube([WpfCube]$cube,$tag){
         $this.width = $cube.width
         $this.height = $cube.height
         $this.depth = $cube.depth
+        $this.tag = $tag
         $this.origin = New-Object System.Windows.Media.Media3D.Point3D -ArgumentList ($cube.origin.X, $cube.origin.Y, $cube.origin.Z)
     }
 #    [WpfRectangle]Front($origin,$width,$height)
