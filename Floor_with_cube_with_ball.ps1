@@ -60,6 +60,7 @@ using Namespace System.Windows.Shapes;
 [System.Reflection.Assembly]::LoadWithPartialName("PresentationCore") | Out-Null
 [System.Reflection.Assembly]::LoadWithPartialName("PresentationFramework") | Out-Null
 [System.Reflection.Assembly]::LoadWithPartialName("System.Drawing") | Out-Null
+[System.Reflection.Assembly]::LoadWithPartialName("PresentationFramework.Aero") | Out-Null
 
 <#
     .SYNOPSIS
@@ -121,7 +122,7 @@ function Cleanup-Variables {
 . .\class\WpfSphere.ps1
 . .\class\camerabox.ps1
 . .\class\scene3d.ps1
-
+. .\function\Set-ContextMenu.ps1
 
 # Because powershell is a runtime code, we cannot use XAML x:Class attribute and commit the code behind this. This behaviour requires compiler and powershell doesn't provide that.
 # For this reason we loose ability to call code behind XAML to call keydown and mousedown etc. things.
@@ -131,10 +132,68 @@ function Cleanup-Variables {
 <Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero"
     x:Name="Window" Title="3D fun stuff" Height="500" Width="500">
+    <Window.Resources>
+        <Style x:Key="MenuStyle" TargetType="{x:Type ContextMenu}" BasedOn="{StaticResource {x:Type ContextMenu}}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ContextMenu}">
+                        <StackPanel>
+                            <theme:SystemDropShadowChrome Name="Shdw2" Color="Transparent" SnapsToDevicePixels="true">
+                            </theme:SystemDropShadowChrome>
+                            <theme:SystemDropShadowChrome Name="Shdw" Color="Transparent" SnapsToDevicePixels="true">
+                                <Border Name="ContextMenuBorder"
+                                        Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                    <Grid>
+                                        <Rectangle Fill="#F1F1F1" HorizontalAlignment="Left" Width="28" Margin="2"
+                                                   RadiusX="2" RadiusY="2" />
+                                        <Rectangle HorizontalAlignment="Left" Width="1" Margin="30,2,0,2"
+                                                   Fill="#E2E3E3" />
+                                        <Rectangle HorizontalAlignment="Left" Width="1" Margin="31,2,0,2" Fill="White" />
+
+                                        <ScrollViewer Name="ContextMenuScrollViewer" CanContentScroll="true"
+                                                      Grid.ColumnSpan="2" Margin="1,0"
+                                                      Style="{DynamicResource {ComponentResourceKey TypeInTargetAssembly={x:Type FrameworkElement}, ResourceId=MenuScrollViewer}}">
+                                            <Grid RenderOptions.ClearTypeHint="Enabled">
+                                                <Canvas Height="0" Width="0" HorizontalAlignment="Left"
+                                                        VerticalAlignment="Top">
+                                                    <Rectangle
+                                                        Height="{Binding ElementName=ContextMenuBorder,Path=ActualHeight}"
+                                                        Width="{Binding ElementName=ContextMenuBorder,Path=ActualWidth}"
+                                                        Fill="{Binding ElementName=ContextMenuBorder,Path=Background}" />
+                                                </Canvas>
+                                                <ItemsPresenter Name="ItemsPresenter"
+                                                                Margin="{TemplateBinding Padding}" KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                            </Grid>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </Border>
+                            </theme:SystemDropShadowChrome>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="HasDropShadow" Value="true">
+                                <Setter TargetName="Shdw" Property="Margin" Value="0,0,5,5" />
+                                <Setter TargetName="Shdw" Property="Color" Value="#71000000" />
+                                <Setter TargetName="Shdw2" Property="Margin" Value="0,0,5,5" />
+                                <Setter TargetName="Shdw2" Property="Color" Value="#71000000" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
     <Grid x:Name="Grid">
         <Viewport3D Grid.Row="0" Grid.Column="0"
-            Name="MainViewport" />
+            Name="MainViewport">
+                <Viewport3D.ContextMenu>
+                    <ContextMenu Style="{StaticResource MenuStyle}">
+                    </ContextMenu>
+                </Viewport3D.ContextMenu>
+            </Viewport3D>
     </Grid>
 </Window>
 "@
@@ -246,8 +305,9 @@ function turnModel{
 }
 
 Class Scene{
-    static [double]$scenesize = 20
+    static [double]$scenesize = 120
 }
+    [double]$floorthickness = [scene]::scenesize / 100
 
 Class Window{
     [Double]$FlyCameraPhi = [Math]::PI / 8.0   # 30 degrees
@@ -257,7 +317,6 @@ Class Window{
 
     # Jos tyypitän tämän niin hajoaa
     $window
-    [double]$floorthickness = [scene]::scenesize / 100
     $viewport
 
     # tehdään constructori
@@ -277,6 +336,10 @@ Class Window{
     {
         $ts = New-Object System.TimeSpan(0, 0, 0, 0, $this.durationM($seconds));
         return $ts;
+    }
+
+    [Void]SubmenuItem_Click([Object] $sender, [EventArgs]$eventArgs){
+        Write-Warning "Klikki toimi"
     }
 }
 
@@ -305,31 +368,41 @@ $camera2 = [CameraBox]::new()
 $camera3 = [CameraBox]::new()
 
 # create a cube with dimensions as some fraction of the scene size
-[WpfCube]$cube = [WpfCube]::new($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize / 6), ([scene]::scenesize / 6), ([scene]::scenesize / 6))
+[WpfCube]$cube = [WpfCube]::new($([System.Windows.Media.Media3D.Point3D]("0, $(([scene]::scenesize / 6)-$($floorthickness)), 0")), ([scene]::scenesize / 6), ([scene]::scenesize / 6), ([scene]::scenesize / 6))
 # construct our geometry model from the cube object
 [System.Windows.Media.Media3D.GeometryModel3D]$cubeModel = $cube.CreateModel([System.Drawing.Color]::Aquamarine)
 [System.Windows.Media.Media3D.GeometryModel3D]$floorModel = [WpfCube]::CreateCubeModel("$(-([scene]::scenesize / 2),-($floorthickness),-([scene]::scenesize/2))",([scene]::scenesize),$floorthickness,[scene]::scenesize,[System.Drawing.Color]::Tan)
+#[System.Windows.Media.Media3D.Model3DGroup]$building_group = New-Object System.Windows.Media.Media3D.Model3DGroup
+[System.Windows.Media.Media3D.GeometryModel3D]$building_floor = [WpfCube]::CreateCubeModel("$(-([scene]::scenesize / 6),-($floorthickness),-([scene]::scenesize/2))",([scene]::scenesize),$floorthickness,[scene]::scenesize,[System.Drawing.Color]::Black)
+[System.Windows.Media.Media3D.GeometryModel3D]$building_wall = [WpfCube]::CreateCubeModel("$(-([scene]::scenesize / 6),$(([scene]::scenesize / 12)-$($floorthickness)),-([scene]::scenesize/3))",($floorthickness*12),([scene]::scenesize / 12),$floorthickness,[System.Drawing.Color]::Brown)
+[System.Windows.Media.Media3D.GeometryModel3D]$building_wall2 = [WpfCube]::CreateCubeModel("$(-([scene]::scenesize / 6),$(([scene]::scenesize / 12)-$($floorthickness)),-([scene]::scenesize/2))",($floorthickness*12),([scene]::scenesize / 12),$floorthickness,[System.Drawing.Color]::Brown)
+[System.Windows.Media.Media3D.GeometryModel3D]$building_wall3 = [WpfCube]::CreateCubeModel("$(-((([scene]::scenesize / 12)-$floorthickness)-($floorthickness*2)),$((([scene]::scenesize / 12))-$($floorthickness)),-([scene]::scenesize/2))",($floorthickness),([scene]::scenesize / 12),($floorthickness*12),[System.Drawing.Color]::Brown)
+[System.Windows.Media.Media3D.GeometryModel3D]$building_wall4 = [WpfCube]::CreateCubeModel("$(-([scene]::scenesize / 6),$(([scene]::scenesize / 12)-$($floorthickness)),-([scene]::scenesize/2))",($floorthickness*12),([scene]::scenesize / 12),$floorthickness,[System.Drawing.Color]::Brown)
+[System.Windows.Media.Media3D.GeometryModel3D]$building_wall5 = [WpfCube]::CreateCubeModel("$(-([scene]::scenesize / 6),$(([scene]::scenesize / 12)-$($floorthickness)),-([scene]::scenesize/2))",($floorthickness*12),([scene]::scenesize / 12),$floorthickness,[System.Drawing.Color]::Brown)
+#$building_group.Children.Add($building_floor)
+#$building_group.Children.Add($building_wall)
+#$building_group.Children.Add($building_wall2)
+#$building_group.Children.Add($building_wall3)
 # create a model group to hold our model
 [System.Windows.Media.Media3D.Model3DGroup]$groupScene = New-Object System.Windows.Media.Media3D.Model3DGroup
 [Sphere]$sphere = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 3, 0")), ([scene]::scenesize / 100), ([scene]::scenesize / 100), ([scene]::scenesize / 100),2.74066683953478,0.6,8.00816300307612)
 [Sphere]$spheresky = [Sphere]::New($([System.Windows.Media.Media3D.Point3D]("0, 0, 0")), ([scene]::scenesize), ([scene]::scenesize), ([scene]::scenesize),0,0,0)
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
-[System.Windows.Media.Media3D.Point3D]$userstartlocation = "9.18277104297157,0.8,-8.98384814917402"
-[Sphere]$ball = [Sphere]::New($sphere,$userstartlocation,1,20,30,"face.jpg",$false,"User",$models,"User")
+[System.Windows.Media.Media3D.Point3D]$userstartlocation = "9.18277104297157,0,-8.98384814917402"
+[Sphere]$ball = [Sphere]::New($sphere,$userstartlocation,(1*([scene]::scenesize / 100)),(20*([scene]::scenesize / 100)),(30*([scene]::scenesize / 100)),"face.jpg",$false,"User",$models,"User")
 #[Sphere]$ball = [Sphere]::New($sphere,-3.5527136788005E-15,-0.333333333333333,-3.5527136788005E-15,1,20,30,"face.jpg",$false,"User",$models,"User")
-[System.Windows.Media.Media3D.Point3D]$opponentstartlocation = "-9.18524945901486,1,9.39554518710787"
+[System.Windows.Media.Media3D.Point3D]$opponentstartlocation = "-9.18524945901486,0,9.39554518710787"
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
-[Sphere]$opponentball = [Sphere]::New($sphere,$opponentstartlocation,1,20,30,"face.jpg",$false,"Ball2",$models,"Opponent")
+[Sphere]$opponentball = [Sphere]::New($sphere,$opponentstartlocation,(1*([scene]::scenesize / 100)),(20*([scene]::scenesize / 100)),(30*([scene]::scenesize / 100)),"face.jpg",$false,"Ball2",$models,"Opponent")
 # $object, Point3D, Radius, num_phi, num_theta, imagefilename, Transparent, Name, models hashmap, Tag
 [System.Windows.Media.Media3D.Point3D]$Skystartlocation = "0,0,0"
-[Sphere]$sky = [Sphere]::New($spheresky,$Skystartlocation,50,20,30,"Sky.jpg",$true,"Sky",$models,"Atmosphere")
+[Sphere]$sky = [Sphere]::New($spheresky,$Skystartlocation,(150*([scene]::scenesize / 100)),(20*([scene]::scenesize / 100)),(30*([scene]::scenesize / 100)),"Sky.jpg",$true,"Sky",$models,"Atmosphere")
 # Create window class
 $mainWindow = [Window]::new([System.Xml.XmlNodeReader]$reader,[System.Windows.Window]$window)
 $MainViewPort = $mainWindow.window.FindName('MainViewport')
 $models.Add($cubeModel,@{Name = "CubeModel"; Tag = "obstacle"})
-$models_check.Add("obstacle",@{Tag = "CubeModel"; Model = $cubeModel})
+#$models.Add($building_group,@{Name = "Building"; Tag = "Building"})
 $models.Add($floorModel,@{Name = "Floor"; Tag = "ground"})
-$models_check.Add("ground",@{Tag = "ground"; Model = @($floorModel)})
 $MainViewPort.camera = $camera2.camera
 $MainViewPort.tag = "Camera2"
 $camera.camera.lookdirection = "-0.999925369660457,0,0.0122170008352693"
@@ -337,8 +410,9 @@ $camera.camera.lookdirection = "-0.999925369660457,0,0.0122170008352693"
 $camera.camera.position = $ball.origin
 $camera3.camera.lookdirection = "-0.999925369660457,0,0.0122170008352693"
 $camera3.camera.position = $ball.origin
-$camera2.camera.position = [System.Windows.Media.Media3D.Point3D]::new(-[Scene]::scenesize, [Scene]::scenesize / 2, [Scene]::scenesize)
-$camera2.camera.LookDirection = [System.Windows.Media.Media3D.Vector3D]::new(20,-10,-20);
+$camera2.camera.position = [System.Windows.Media.Media3D.Point3D]::new(-[Scene]::scenesize, [Scene]::scenesize / 3, [Scene]::scenesize)
+#$camera2.camera.LookDirection = [System.Windows.Media.Media3D.Vector3D]::new(20,-10,-20);
+$camera2.camera.LookDirection = "1,0,-1";
 $camera2.camera.FieldOfView = 60
 $ball.lookdirection = $camera.camera.lookdirection
 $opponentball.lookdirection = $camera.camera.lookdirection
@@ -347,6 +421,8 @@ $visual = New-Object System.Windows.Media.Media3D.ModelVisual3D
 $spherevisual = New-Object System.Windows.Media.Media3D.ModelVisual3D
 $opponentvisual = New-Object System.Windows.Media.Media3D.ModelVisual3D
 $skyvisual = New-Object System.Windows.Media.Media3D.ModelVisual3D
+#$buildingvisual = New-Object System.Windows.Media.Media3D.ModelVisual3D
+#$buildingvisual.Content = $building_group
 # populate the visual with the geometry model we made
 $visual.Content = $groupScene
 $spherevisual.content = ($ball.GetModelGroup())
@@ -359,8 +435,10 @@ $transformGroup = New-Object System.Windows.Media.Media3D.Transform3DGroup;
 $mainWindow.window.Add_Loaded({
     $mainWindow.window.content.ShowGridLines = $true
     $mainWindow.window.content.Background = 'Black'
+    #$MainViewPort.Content.ContextMenu.Add($menuitem1)
     # add our cube to the model group
     $groupScene.Children.Add($cubeModel)
+#    $groupScene.Children.Add($buildingvisual)
     $groupScene.Children.Add($floorModel)
     # add a directional light
     $groupScene.Children.Add((positionLight -position ("$(-([scene]::scenesize), ([scene]::scenesize / 2), 0.0)")))
@@ -479,11 +557,20 @@ $mainWindow.window.Add_Loaded({
                 Write-warning ($models[$mesh_result.ModelHit]).Name
                 Write-Warning ($mesh_result)
                 Write-Warning $mesh_result.DistanceToRayOrigin
-                Write-Warning $mesh_result.PointHit.ToString()
+                Write-Warning "Pointhit : $($mesh_result.PointHit)"
                 [MeshGeometry3D]$mesh = $mesh_result.MeshHit
                 Write-Warning $mesh.positions[$mesh_result.VertexIndex1].toString()
                 Write-Warning $mesh.positions[$mesh_result.VertexIndex2].toString()
                 Write-Warning $mesh.positions[$mesh_result.VertexIndex3].toString()
+                Set-ContextMenu -Model $(($models[$mesh_result.ModelHit]).Name) -position $mesh_result.PointHit
+            }
+        }
+        if($eventArgs.RightButton){
+            $mouse_position = $eventArgs.GetPosition($MainViewPort)
+            [HitTestResult]$result = [VisualTreeHelper]::HitTest($MainViewPort, $mouse_position)
+            [RayMeshGeometry3DHitTestResult]$mesh_result = $result -as [RayMeshGeometry3DHitTestResult]
+            if($mesh_result -ne $null){
+                Set-ContextMenu -Model $(($models[$mesh_result.ModelHit]).Name) -position $mesh_result.PointHit
             }
         }
     })
@@ -568,23 +655,23 @@ $timer.add_Tick({
                 }
             }
             Drop{
-                $ball.Jump("0,-1.0,0", (0.34*2))
-                $camera.Move("0,-1.0,0", (0.34*2))
-                $camera3.Move("0,-1.0,0", (0.34*2))
+                $ball.Jump("0,-0.1,0", (0.34*10))
+                $camera.Move("0,-0.1,0", (0.34*10))
+                $camera3.Move("0,-0.1,0", (0.34*10))
             }
             Default{
                 if(-not ($cubeaction -eq 'Collision')){
-                $ball.Jump("0,-0.1,0", (0.34/2))
-                $camera.Move("0,-0.1,0", (0.34/2))
-                $camera3.Move("0,-0.1,0", (0.34/2))
+                $ball.Jump("0,-0.1,0", (0.34*2))
+                $camera.Move("0,-0.1,0", (0.34*2))
+                $camera3.Move("0,-0.1,0", (0.34*2))
                 }
             }
         }    
     }
     if($Camera.jump -eq 0.34){
-        $ball.Jump("0,1.0,0", $camera.jump)
-        $camera.Move("0,1.0,0", $camera.jump)
-        $camera3.Move("0,1.0,0", $camera.jump)
+        $ball.Jump("0,1.0,0", ($camera.jump*9))
+        $camera.Move("0,1.0,0", ($camera.jump*9))
+        $camera3.Move("0,1.0,0", ($camera.jump*9))
         $camera.jump = 0.0
     }    
     if($Camera.crouch -eq 0.34){
@@ -701,6 +788,42 @@ $window.Add_KeyDown({
             }
         }
         Switch ($eventArgs.key){
+            'i'{
+                $xfactor = 0.35
+                $direction = "Up"
+                $camera2.Move($camera2.camera.LookDirection, +$xfactor)
+                Break;
+            }
+            'k'{
+                $xfactor = 0.35
+                $direction = "Down"
+                $camera2.Move($camera2.camera.LookDirection, -$xfactor)
+                Break;
+            }
+            'j'{
+                $xfactor = 0.35
+                [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, 1, 0)
+                $direction = "Left"
+                $Camera2.Rotate($axis,$xfactor,$Camera2.position())
+                Break;
+            }
+            'l'{
+                $xfactor = 0.35
+                [System.Windows.Media.Media3D.Vector3D]$axis = New-Object System.Windows.Media.Media3D.Vector3D(0, -1, 0)
+                $direction = "Right"
+                $Camera2.Rotate($axis,$xfactor,$Camera2.position())
+                Break;
+            }
+            'y'{
+                [double]$yfactor = 0,35
+                $Camera3.ChangePitch($yfactor)
+                Break;
+            }
+            'h'{
+                [double]$yfactor = 0,35
+                $Camera3.ChangePitch(-$yfactor)
+                Break;
+            }
             'w'{
                 $direction = "up"
                 $camera2.PositionFlyCamera($camera2.FlyCameraPhi,$flyCameraDPhi,$direction)

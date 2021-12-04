@@ -484,14 +484,14 @@ Class Sphere : System.ComponentModel.INotifyPropertyChanged{
         }
 
         if($distance -le ($sphere.startradius + ($myobject.bounds.SizeX /2))){
-                if((($sphere.GetBoundsOrigin().X + $this.width*4) -ge $myobject.bounds.X) -and (($sphere.GetBoundsOrigin().X - $this.width*4) -le ($myobject.bounds.X + $myobject.bounds.SizeX)) -and
-                    (($sphere.GetBoundsOrigin().Y + $this.height *4) -ge $myobject.bounds.Y) -and (($sphere.GetBoundsOrigin().Y - ($this.height*4)) -le ($myobject.bounds.Y + $myobject.bounds.SizeY)) -and
-                    (($sphere.GetBoundsOrigin().Z + $this.width*4) -ge $myobject.bounds.Z) -and (($sphere.GetBoundsOrigin().Z - ($this.width*4)) -le ($myobject.bounds.Z + $myobject.bounds.SizeZ))
+                if((($sphere.GetBoundsOrigin().X + $this.width) -ge $myobject.bounds.X) -and (($sphere.GetBoundsOrigin().X - $this.width) -le ($myobject.bounds.X + $myobject.bounds.SizeX)) -and
+                    (($sphere.GetBoundsOrigin().Y + $this.height) -ge $myobject.bounds.Y) -and (($sphere.GetBoundsOrigin().Y - ($this.height)) -le ($myobject.bounds.Y + $myobject.bounds.SizeY)) -and
+                    (($sphere.GetBoundsOrigin().Z + $this.width) -ge $myobject.bounds.Z) -and (($sphere.GetBoundsOrigin().Z - ($this.width)) -le ($myobject.bounds.Z + $myobject.bounds.SizeZ))
                 ){
                     Return [SphereAction]::Collision
                 } else {
-                    if((($sphere.GetBoundsOrigin().X + $this.width*4) -ge $myobject.bounds.X) -and (($sphere.GetBoundsOrigin().X - $this.width*4) -le ($myobject.bounds.X + $myobject.bounds.SizeX)) -and
-                        (($sphere.GetBoundsOrigin().Z + $this.width*4) -ge $myobject.bounds.Z) -and (($sphere.GetBoundsOrigin().Z - ($this.width*4)) -le ($myobject.bounds.Z + $myobject.bounds.SizeZ))
+                    if((($sphere.GetBoundsOrigin().X + $this.width) -ge $myobject.bounds.X) -and (($sphere.GetBoundsOrigin().X - $this.width) -le ($myobject.bounds.X + $myobject.bounds.SizeX)) -and
+                        (($sphere.GetBoundsOrigin().Z + $this.width) -ge $myobject.bounds.Z) -and (($sphere.GetBoundsOrigin().Z - ($this.width)) -le ($myobject.bounds.Z + $myobject.bounds.SizeZ))
                     ){
                         Return [SphereAction]::Nothing
                     } else {
@@ -507,14 +507,14 @@ Class Sphere : System.ComponentModel.INotifyPropertyChanged{
             }
         } 
         else {
-            if((($sphere.GetBoundsOrigin().X + $this.width*4) -ge $myobject.bounds.X) -and (($sphere.GetBoundsOrigin().X - $this.width*4) -le ($myobject.bounds.X + $myobject.bounds.SizeX)) -and
-                (($sphere.GetBoundsOrigin().Y + $this.height *4) -ge $myobject.bounds.Y) -and (($sphere.GetBoundsOrigin().Y - ($this.height*4)) -le ($myobject.bounds.Y + $myobject.bounds.SizeY)) -and
-                (($sphere.GetBoundsOrigin().Z + $this.width*4) -ge $myobject.bounds.Z) -and (($sphere.GetBoundsOrigin().Z - ($this.width*4)) -le ($myobject.bounds.Z + $myobject.bounds.SizeZ))
+            if((($sphere.GetBoundsOrigin().X + $this.width) -ge $myobject.bounds.X) -and (($sphere.GetBoundsOrigin().X - $this.width) -le ($myobject.bounds.X + $myobject.bounds.SizeX)) -and
+                (($sphere.GetBoundsOrigin().Y + $this.height) -ge $myobject.bounds.Y) -and (($sphere.GetBoundsOrigin().Y - ($this.height)) -le ($myobject.bounds.Y + $myobject.bounds.SizeY)) -and
+                (($sphere.GetBoundsOrigin().Z + $this.width) -ge $myobject.bounds.Z) -and (($sphere.GetBoundsOrigin().Z - ($this.width)) -le ($myobject.bounds.Z + $myobject.bounds.SizeZ))
             ){
                 Return [SphereAction]::Collision
             } else {
-                if((($sphere.GetBoundsOrigin().X + $this.width*4) -ge $myobject.bounds.X) -and (($sphere.GetBoundsOrigin().X - $this.width*4) -le ($myobject.bounds.X + $myobject.bounds.SizeX)) -and
-                    (($sphere.GetBoundsOrigin().Z + $this.width*4) -ge $myobject.bounds.Z) -and (($sphere.GetBoundsOrigin().Z - ($this.width*4)) -le ($myobject.bounds.Z + $myobject.bounds.SizeZ))
+                if((($sphere.GetBoundsOrigin().X + $this.width) -ge $myobject.bounds.X) -and (($sphere.GetBoundsOrigin().X - $this.width) -le ($myobject.bounds.X + $myobject.bounds.SizeX)) -and
+                    (($sphere.GetBoundsOrigin().Z + $this.width) -ge $myobject.bounds.Z) -and (($sphere.GetBoundsOrigin().Z - ($this.width)) -le ($myobject.bounds.Z + $myobject.bounds.SizeZ))
                 ){
                     Return [SphereAction]::Nothing
                 } else {

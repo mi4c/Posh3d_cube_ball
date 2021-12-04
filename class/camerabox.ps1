@@ -2,6 +2,8 @@
     [int]$speed
     [double]$amount
     [double]$jump
+    [System.Windows.Media.Media3D.Point3D]$jumpfrom
+    [Double]$diibadaaba
     [double]$crouch
     [Double]$scale = 1
 	[int]$lookBackAngle

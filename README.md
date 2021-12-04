@@ -20,6 +20,7 @@ zoomin/out skycam keys r,f
 Change camera view num keys 1,2,3 (Camera3 is responsible to get our unit not to move into the air or below the floor when camera2 is watching up or down)
 
 Ball intersect was not as accurate as I intended, so added some more logic to that.
+Add mouse right click to show contextmenu, when right click on models different contextmenu is visible. All have own click actions.
 
 ![fun1](/Screenshots/fun1.PNG)
 ![fun2](/Screenshots/fun2.PNG)
