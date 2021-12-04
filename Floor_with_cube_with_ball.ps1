@@ -24,9 +24,10 @@
     - http://csharphelper.com/blog/2017/05/make-3d-globe-wpf-c/
     - https://www.codeproject.com/Articles/125694/How-To-Make-A-Walking-Robot-In-WPF-Part-3-Emissive
     - https://www.codeproject.com/Articles/1087090/WFTools-D-A-Small-WPF-Library-To-Build-D-Simulatio
+    - https://stackoverflow.com/questions/12963094/how-to-display-a-popup-above-mouse-location
     Also some minor example how to do something in powershell was found from here
     - https://gist.github.com/nikonthethird/2ab6bfad9a81d5fe127fd0d1c2844b7c
-    - https://devblogs.microsoft.com/scripting/weekend-scripter-create-a-holiday-greeting-using-powershell-and-wpf/    
+    - https://devblogs.microsoft.com/scripting/weekend-scripter-create-a-holiday-greeting-using-powershell-and-wpf/
 #> 
 #Using Assembly PresentationCore
 #Using Assembly PresentationFramework
