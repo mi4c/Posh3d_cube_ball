@@ -10,7 +10,7 @@
 	[bool]$turnToTarget
     [Double]$FlyCameraPhi = [Math]::PI / 8.0   # 30 degrees
     [Double]$FlyCameraTheta = [Math]::PI / 8.0 # 30 degrees
-    [Double]$FlyCameraR = 30.0
+    [Double]$FlyCameraR = 15.0
     [Bool]$outofscope
 	[System.Windows.Media.Media3D.Vector3D]$targetUp
     [System.Windows.Media.Media3D.Vector3D]$targetLook
